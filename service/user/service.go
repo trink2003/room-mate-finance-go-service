@@ -11,22 +11,28 @@ import (
 	"time"
 )
 
-type UserRegisterRequestBody struct {
+type UserRegisterRequestBodyValue struct {
 	Username string `json:"username"`
 	Password string `json:"password"`
 }
 
-func (h UserHandler) GetUser(ginContext *gin.Context) {
+type UserRegisterRequestBody struct {
+	Request UserRegisterRequestBodyValue `json:"request"`
+}
+
+func (h UserHandler) GetUsers(ginContext *gin.Context) {
 
 	context := context2.Background()
 	traceId := uuid.New().String()
 
 	context = context2.WithValue(context, "traceId", traceId)
 
-	var user []model.User
+	var user []model.Users
 
 	if result := h.DB.Find(&user); result.Error != nil {
-		ginContext.AbortWithError(http.StatusNotFound, result.Error)
+		ginContext.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{
+			"error": result.Error,
+		})
 		return
 	}
 
@@ -43,28 +49,52 @@ func (h UserHandler) AddNewUser(ginContext *gin.Context) {
 	requestPayload := UserRegisterRequestBody{}
 
 	if err := ginContext.BindJSON(&requestPayload); err != nil {
-		ginContext.AbortWithError(http.StatusBadRequest, err)
+		ginContext.AbortWithStatusJSON(http.StatusBadRequest, gin.H{
+			"error": err,
+		})
+		return
+	}
+	context = context2.WithValue(context, "username", requestPayload.Request.Username)
+
+	var userInDatabase = model.Users{}
+
+	userInDatabaseQueryResult := h.DB.Where("username = ? AND active is true OR active is false", requestPayload.Request.Username).Find(&userInDatabase)
+
+	if userInDatabaseQueryResult.Error != nil {
+		ginContext.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{
+			"error": userInDatabaseQueryResult.Error,
+		})
 		return
 	}
 
-	if encryptPasswordError := utils.EncryptPasswordPointer(&requestPayload.Password); encryptPasswordError != nil {
-		ginContext.AbortWithError(http.StatusInternalServerError, encryptPasswordError)
+	if userInDatabase.BaseEntity.Id != 0 {
+		ginContext.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{
+			"error": "user already exist in db",
+		})
 		return
 	}
 
-	var user = model.User{
-		Username: requestPayload.Username,
-		Password: requestPayload.Password,
+	if encryptPasswordError := utils.EncryptPasswordPointer(&requestPayload.Request.Password); encryptPasswordError != nil {
+		ginContext.AbortWithStatusJSON(http.StatusInternalServerError, encryptPasswordError)
+		return
+	}
+
+	var user = model.Users{
+		Username: requestPayload.Request.Username,
+		Password: requestPayload.Request.Password,
+		UserUid:  uuid.New().String(),
 	}
 
 	if result := SaveNewUser(h.DB, &user, context); result.Error != nil {
-		ginContext.AbortWithError(http.StatusInternalServerError, result.Error)
+		ginContext.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{
+			"error": result.Error,
+		})
 		return
 	}
 	ginContext.JSON(http.StatusOK, user)
 }
 
-func SaveNewUser(db *gorm.DB, user *model.User, ctx context2.Context) *gorm.DB {
+func SaveNewUser(db *gorm.DB, user *model.Users, ctx context2.Context) *gorm.DB {
 	user.BaseEntity.Active = true
 	user.BaseEntity.CreatedAt = time.Now()
 	user.BaseEntity.UpdatedAt = time.Now()

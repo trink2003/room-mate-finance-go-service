@@ -10,7 +10,7 @@ import (
 func main() {
 	applicationPort := os.Getenv("APPLICATION_PORT")
 	if applicationPort == "" {
-		applicationPort = "room-mate-finance"
+		applicationPort = "8080"
 	}
 
 	db, err := config.InitDatabaseConnection()
@@ -28,7 +28,7 @@ func main() {
 		})
 	})
 
-	ginErr := router.Run(applicationPort)
+	ginErr := router.Run(":" + applicationPort)
 	if ginErr != nil {
 		panic(ginErr)
 	}

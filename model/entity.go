@@ -3,16 +3,25 @@ package model
 import "time"
 
 type BaseEntity struct {
-	Id        int64     `json:"id" gorm:"column:ID;primaryKey;"`
-	Active    bool      `json:"active" gorm:"column:ACTIVE;"`
-	CreatedAt time.Time `json:"createdAt" gorm:"column:CREATED_AT;"`
-	UpdatedAt time.Time `json:"updatedAt" gorm:"column:UPDATED_AT;"`
-	CreatedBy string    `json:"createdBy" gorm:"column:CREATED_BY;"`
-	UpdatedBy string    `json:"updatedBy" gorm:"column:UPDATED_BY;"`
+	Id        int64     `json:"id" gorm:"column:id;primaryKey;"`
+	Active    bool      `json:"active" gorm:"column:active;"`
+	CreatedAt time.Time `json:"createdAt" gorm:"column:created_at;"`
+	UpdatedAt time.Time `json:"updatedAt" gorm:"column:updated_at;"`
+	CreatedBy string    `json:"createdBy" gorm:"column:created_by;"`
+	UpdatedBy string    `json:"updatedBy" gorm:"column:updated_by;"`
 }
 
-type User struct {
+type Users struct {
 	BaseEntity BaseEntity `gorm:"embedded"`
-	Username   string     `json:"username" gorm:"column:USERNAME;"`
-	Password   string     `json:"password" gorm:"column:PASSWORD;"`
+	Username   string     `json:"username" gorm:"column:username;"`
+	Password   string     `json:"password" gorm:"column:password;"`
+	UserUid    string     `json:"userUid" gorm:"column:user_uid;"`
+}
+
+type Tabler interface {
+	TableName() string
+}
+
+func (Users) TableName() string {
+	return "users"
 }
