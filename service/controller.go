@@ -1,14 +1,14 @@
-package user
+package service
 
 import (
 	"bytes"
+	"encoding/json"
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
 	"io"
 	"log"
 	"net/http"
 	"room-mate-finance-go-service/utils"
-	"time"
 )
 
 type UserHandler struct {
@@ -34,8 +34,11 @@ func RegisterRoutes(router *gin.Engine, db *gorm.DB) {
 	router.Use(RequestLogger)
 	router.Use(ResponseLogger)
 
-	routes := router.Group("/auth")
-	routes.POST("/register", h.AddNewUser)
+	authRouter := router.Group("/auth")
+	authRouter.POST("/register", h.AddNewUser)
+
+	userRouter := router.Group("/user")
+	userRouter.POST("/get_all_active_user", h.GetUsers)
 }
 
 func ErrorHandler(c *gin.Context) {
@@ -47,21 +50,29 @@ func ErrorHandler(c *gin.Context) {
 
 func RequestLogger(c *gin.Context) {
 	utils.CheckAndSetTraceId(c)
-	t := time.Now()
+	// t := time.Now()
 	var buf bytes.Buffer
 	tee := io.TeeReader(c.Request.Body, &buf)
 	body, _ := io.ReadAll(tee)
 	c.Request.Body = io.NopCloser(&buf)
-	log.Printf(utils.GetTraceId(c) + " - Request body: " + string(body))
-	log.Printf(utils.GetTraceId(c)+" - "+"Request info: %s", c.Request.Header)
-	c.Next()
-	latency := time.Since(t)
-	log.Printf("%s %s %s %s\n",
-		c.Request.Method,
+	dst := &bytes.Buffer{}
+	if err := json.Compact(dst, body); err != nil {
+		panic(err)
+	}
+	log.Printf(
+		"%s - Request info:\n\t- header: %s\n\t- url: %s\n\t- method: %s\n\t- proto: %s\n\t- payload:\n\t%s",
+		utils.GetTraceId(c),
+		c.Request.Header,
 		c.Request.RequestURI,
+		c.Request.Method,
 		c.Request.Proto,
-		latency,
+		dst.String(),
 	)
+	c.Next()
+	// latency := time.Since(t)
+	// log.Printf("%s %s %s %s\n",
+	// 	c.Request.RequestURI,
+	// )
 }
 
 func ResponseLogger(c *gin.Context) {
@@ -73,11 +84,13 @@ func ResponseLogger(c *gin.Context) {
 	c.Next()
 
 	statusCode := c.Writer.Status()
-	log.Printf(utils.GetTraceId(c)+" - "+"%d %s %s\n",
+	log.Printf(
+		"%s - Response info:\n\t- status code: %s\n\t- method: %s\n\t- url: %s\n\t- payload:\n\t%s",
+		utils.GetTraceId(c),
 		statusCode,
 		c.Request.Method,
 		c.Request.RequestURI,
+		blw.body.String(),
 	)
-	log.Printf(utils.GetTraceId(c)+" - "+"Response body: %s", blw.body.String())
 
 }

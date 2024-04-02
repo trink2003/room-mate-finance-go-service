@@ -1,4 +1,4 @@
-package user
+package service
 
 import (
 	context2 "context"
@@ -23,14 +23,9 @@ type UserRegisterRequestBody struct {
 
 func (h UserHandler) GetUsers(ginContext *gin.Context) {
 
-	context := context2.Background()
-	traceId := uuid.New().String()
-
-	context = context2.WithValue(context, "traceId", traceId)
-
 	var user []model.Users
 
-	if result := h.DB.Find(&user); result.Error != nil {
+	if result := h.DB.Where("active is not null AND active is true ORDER BY id DESC").Find(&user); result.Error != nil {
 		ginContext.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{
 			"trace": utils.GetTraceId(ginContext),
 			"error": result.Error,
@@ -61,7 +56,13 @@ func (h UserHandler) AddNewUser(ginContext *gin.Context) {
 
 	var userInDatabase = model.Users{}
 
-	userInDatabaseQueryResult := h.DB.Where("username = ? AND active is true OR active is false", requestPayload.Request.Username).Find(&userInDatabase)
+	userInDatabaseQueryResult := h.
+		DB.
+		Limit(1).
+		Where(
+			"username = ? AND active is true OR active is false", requestPayload.Request.Username,
+		).
+		Find(&userInDatabase)
 
 	if userInDatabaseQueryResult.Error != nil {
 		ginContext.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{
@@ -90,7 +91,7 @@ func (h UserHandler) AddNewUser(ginContext *gin.Context) {
 		UserUid:  uuid.New().String(),
 	}
 
-	if result := SaveNewUser(h.DB, &user, context); result.Error != nil {
+	if result := SaveNewUser(h.DB, &user, context); result != nil {
 		ginContext.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{
 			"trace": utils.GetTraceId(ginContext),
 			"error": result.Error,
@@ -100,11 +101,19 @@ func (h UserHandler) AddNewUser(ginContext *gin.Context) {
 	ginContext.JSON(http.StatusOK, user)
 }
 
-func SaveNewUser(db *gorm.DB, user *model.Users, ctx context2.Context) *gorm.DB {
+func SaveNewUser(db *gorm.DB, user *model.Users, ctx context2.Context) error {
 	user.BaseEntity.Active = true
 	user.BaseEntity.CreatedAt = time.Now()
 	user.BaseEntity.UpdatedAt = time.Now()
 	user.BaseEntity.CreatedBy = ctx.Value("username").(string)
 	user.BaseEntity.UpdatedBy = ctx.Value("username").(string)
-	return db.Save(user)
+
+	saveFunc := func(tx *gorm.DB) error {
+		if err := tx.Create(user).Error; err != nil {
+			// return any error will rollback
+			return err
+		}
+		return nil
+	}
+	return db.Transaction(saveFunc)
 }

@@ -12,9 +12,9 @@ type BaseEntity struct {
 }
 
 type Users struct {
-	BaseEntity BaseEntity `gorm:"embedded"`
+	BaseEntity BaseEntity `gorm:"embedded" json:"baseInfo"`
 	Username   string     `json:"username" gorm:"column:username;"`
-	Password   string     `json:"password" gorm:"column:password;"`
+	Password   string     `json:"-" gorm:"column:password;"`
 	UserUid    string     `json:"userUid" gorm:"column:user_uid;"`
 }
 

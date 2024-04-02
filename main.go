@@ -4,7 +4,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"os"
 	"room-mate-finance-go-service/config"
-	"room-mate-finance-go-service/service/user"
+	"room-mate-finance-go-service/service"
 )
 
 func main() {
@@ -20,7 +20,7 @@ func main() {
 
 	router := gin.Default()
 
-	user.RegisterRoutes(router, db)
+	service.RegisterRoutes(router, db)
 
 	router.GET("/", func(ctx *gin.Context) {
 		ctx.JSON(200, gin.H{
