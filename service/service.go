@@ -6,6 +6,11 @@ import (
 	"room-mate-finance-go-service/model"
 )
 
+type UserRegisterRequestBody struct {
+	Username string `json:"username"`
+	Password string `json:"password"`
+}
+
 func (h handler) GetUser(ginContext *gin.Context) {
 	var user []model.User
 
@@ -15,4 +20,8 @@ func (h handler) GetUser(ginContext *gin.Context) {
 	}
 
 	ginContext.JSON(http.StatusOK, &user)
+}
+
+func (h handler) AddNewUser(ginContext *gin.Context) {
+
 }
