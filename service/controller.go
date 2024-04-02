@@ -56,7 +56,7 @@ func RequestLogger(c *gin.Context) {
 	body, _ := io.ReadAll(tee)
 	c.Request.Body = io.NopCloser(&buf)
 	dst := &bytes.Buffer{}
-	if err := json.Compact(dst, body); err != nil {
+	if err := json.Compact(dst, body); err != nil && len(body) > 0 {
 		panic(err)
 	}
 	log.Printf(
