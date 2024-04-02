@@ -22,13 +22,16 @@ func InitDatabaseConnection() (db *gorm.DB, err error) {
 	}
 	databaseHost := os.Getenv("DATABASE_HOST")
 	if databaseHost == "" {
-		databaseHost = "localhost"
+		databaseHost = "192.168.22.120"
 	}
 	databasePort := os.Getenv("DATABASE_PORT")
 	if databasePort == "" {
 		databasePort = "5432"
 	}
 	databaseName := os.Getenv("DATABASE_NAME")
+	if databaseName == "" {
+		databaseName = "room-mate-finance"
+	}
 	// dsn := fmt.Sprintf(
 	// 	"%s:%s@tcp(%s:%s)/%s?charset=utf8mb4&parseTime=True&loc=Local",
 	// 	databaseUsername,
