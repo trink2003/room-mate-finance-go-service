@@ -40,7 +40,7 @@ func RegisterRoutes(router *gin.Engine, db *gorm.DB) {
 
 func ErrorHandler(c *gin.Context) {
 	utils.CheckAndSetTraceId(c)
-	if c.Errors != nil {
+	if c.Errors != nil && len(c.Errors.Errors()) != 0 {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": c.Errors.Errors()})
 	}
 }
@@ -52,8 +52,8 @@ func RequestLogger(c *gin.Context) {
 	tee := io.TeeReader(c.Request.Body, &buf)
 	body, _ := io.ReadAll(tee)
 	c.Request.Body = io.NopCloser(&buf)
-	log.Printf(utils.GetTraceId(c) + " - " + string(body))
-	log.Printf(utils.GetTraceId(c)+" - "+"Request body: %s", c.Request.Header)
+	log.Printf(utils.GetTraceId(c) + " - Request body: " + string(body))
+	log.Printf(utils.GetTraceId(c)+" - "+"Request info: %s", c.Request.Header)
 	c.Next()
 	latency := time.Since(t)
 	log.Printf("%s %s %s %s\n",

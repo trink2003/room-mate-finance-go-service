@@ -13,8 +13,8 @@ import (
 )
 
 type UserRegisterRequestBodyValue struct {
-	Username string `json:"username"`
-	Password string `json:"password"`
+	Username string `json:"username" binding:"required"`
+	Password string `json:"password" binding:"required"`
 }
 
 type UserRegisterRequestBody struct {
@@ -50,10 +50,10 @@ func (h UserHandler) AddNewUser(ginContext *gin.Context) {
 
 	requestPayload := UserRegisterRequestBody{}
 
-	if err := ginContext.BindJSON(&requestPayload); err != nil {
+	if err := ginContext.ShouldBindJSON(&requestPayload); err != nil {
 		ginContext.AbortWithStatusJSON(http.StatusBadRequest, gin.H{
 			"trace": utils.GetTraceId(ginContext),
-			"error": err,
+			"error": err.Error(),
 		})
 		return
 	}
