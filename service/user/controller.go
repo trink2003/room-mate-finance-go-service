@@ -7,6 +7,7 @@ import (
 	"io"
 	"log"
 	"net/http"
+	"room-mate-finance-go-service/utils"
 	"time"
 )
 
@@ -38,19 +39,21 @@ func RegisterRoutes(router *gin.Engine, db *gorm.DB) {
 }
 
 func ErrorHandler(c *gin.Context) {
+	utils.CheckAndSetTraceId(c)
 	if c.Errors != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": c.Errors.Errors()})
 	}
 }
 
 func RequestLogger(c *gin.Context) {
+	utils.CheckAndSetTraceId(c)
 	t := time.Now()
 	var buf bytes.Buffer
 	tee := io.TeeReader(c.Request.Body, &buf)
 	body, _ := io.ReadAll(tee)
 	c.Request.Body = io.NopCloser(&buf)
-	log.Printf(string(body))
-	log.Printf("Request body: %s", c.Request.Header)
+	log.Printf(utils.GetTraceId(c) + " - " + string(body))
+	log.Printf(utils.GetTraceId(c)+" - "+"Request body: %s", c.Request.Header)
 	c.Next()
 	latency := time.Since(t)
 	log.Printf("%s %s %s %s\n",
@@ -62,6 +65,7 @@ func RequestLogger(c *gin.Context) {
 }
 
 func ResponseLogger(c *gin.Context) {
+	utils.CheckAndSetTraceId(c)
 	c.Writer.Header().Set("X-Content-Type-Options", "nosniff")
 	blw := &bodyLogWriter{body: bytes.NewBufferString(""), ResponseWriter: c.Writer}
 	c.Writer = blw
@@ -69,11 +73,11 @@ func ResponseLogger(c *gin.Context) {
 	c.Next()
 
 	statusCode := c.Writer.Status()
-	log.Printf("%d %s %s\n",
+	log.Printf(utils.GetTraceId(c)+" - "+"%d %s %s\n",
 		statusCode,
 		c.Request.Method,
 		c.Request.RequestURI,
 	)
-	log.Printf("Response body: %s", blw.body.String())
+	log.Printf(utils.GetTraceId(c)+" - "+"Response body: %s", blw.body.String())
 
 }

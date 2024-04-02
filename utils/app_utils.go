@@ -1,6 +1,8 @@
 package utils
 
 import (
+	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -28,4 +30,18 @@ func EncryptPasswordPointer(password *string) (error error) {
 
 func ComparePassword(inputPassword string, hashedPassword string) error {
 	return bcrypt.CompareHashAndPassword([]byte(hashedPassword), []byte(inputPassword))
+}
+
+func CheckAndSetTraceId(c *gin.Context) {
+	if traceId, _ := c.Get("traceId"); traceId == nil || traceId == "" {
+		c.Set("traceId", uuid.New().String())
+	}
+}
+
+func GetTraceId(c *gin.Context) string {
+	if traceId, _ := c.Get("traceId"); traceId == nil || traceId == "" {
+		return ""
+	} else {
+		return traceId.(string)
+	}
 }

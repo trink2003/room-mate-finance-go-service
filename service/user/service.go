@@ -2,13 +2,14 @@ package user
 
 import (
 	context2 "context"
-	"github.com/gin-gonic/gin"
-	"github.com/google/uuid"
-	"gorm.io/gorm"
 	"net/http"
 	"room-mate-finance-go-service/model"
 	"room-mate-finance-go-service/utils"
 	"time"
+
+	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
+	"gorm.io/gorm"
 )
 
 type UserRegisterRequestBodyValue struct {
@@ -31,6 +32,7 @@ func (h UserHandler) GetUsers(ginContext *gin.Context) {
 
 	if result := h.DB.Find(&user); result.Error != nil {
 		ginContext.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{
+			"trace": utils.GetTraceId(ginContext),
 			"error": result.Error,
 		})
 		return
@@ -50,6 +52,7 @@ func (h UserHandler) AddNewUser(ginContext *gin.Context) {
 
 	if err := ginContext.BindJSON(&requestPayload); err != nil {
 		ginContext.AbortWithStatusJSON(http.StatusBadRequest, gin.H{
+			"trace": utils.GetTraceId(ginContext),
 			"error": err,
 		})
 		return
@@ -62,6 +65,7 @@ func (h UserHandler) AddNewUser(ginContext *gin.Context) {
 
 	if userInDatabaseQueryResult.Error != nil {
 		ginContext.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{
+			"trace": utils.GetTraceId(ginContext),
 			"error": userInDatabaseQueryResult.Error,
 		})
 		return
@@ -69,6 +73,7 @@ func (h UserHandler) AddNewUser(ginContext *gin.Context) {
 
 	if userInDatabase.BaseEntity.Id != 0 {
 		ginContext.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{
+			"trace": utils.GetTraceId(ginContext),
 			"error": "user already exist in db",
 		})
 		return
@@ -87,6 +92,7 @@ func (h UserHandler) AddNewUser(ginContext *gin.Context) {
 
 	if result := SaveNewUser(h.DB, &user, context); result.Error != nil {
 		ginContext.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{
+			"trace": utils.GetTraceId(ginContext),
 			"error": result.Error,
 		})
 		return
