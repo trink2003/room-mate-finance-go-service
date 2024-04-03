@@ -1,10 +1,12 @@
 package utils
 
 import (
+	"errors"
 	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/google/uuid"
 	"golang.org/x/crypto/bcrypt"
+	"log"
 	"os"
 	"strconv"
 	"time"
@@ -54,7 +56,7 @@ func GenerateJwtToken(username string, role ...string) string {
 
 	secretKey := os.Getenv("JWT_SECRET_KEY")
 	if secretKey == "" {
-		secretKey = uuid.New().String()
+		secretKey = "Q8OzIHRo4buDIGfhu41pIGFuaCBsw6AgxJHhurlwIHRyYWkgbmjhuqV0IFZp4buHdCBOYW0"
 	}
 
 	tokenExpireTime := os.Getenv("JWT_EXPIRE_TIME")
@@ -82,24 +84,24 @@ func GenerateJwtToken(username string, role ...string) string {
 	return tokenString
 }
 
-func VerifyJwtToken(token string) jwt.MapClaims {
+func VerifyJwtToken(token string) (jwt.MapClaims, error) {
 
 	secretKey := os.Getenv("JWT_SECRET_KEY")
 	if secretKey == "" {
-		secretKey = uuid.New().String()
+		secretKey = "Q8OzIHRo4buDIGfhu41pIGFuaCBsw6AgxJHhurlwIHRyYWkgbmjhuqV0IFZp4buHdCBOYW0"
 	}
 
 	parsedToken, tokenParseError := jwt.Parse(token, func(token *jwt.Token) (interface{}, error) {
-		return secretKey, nil
+		return []byte(secretKey), nil
 	})
 	if tokenParseError != nil {
-		panic(tokenParseError)
+		log.Print(tokenParseError)
+		return nil, tokenParseError
 	}
 
 	if !parsedToken.Valid {
-		return nil
+		return nil, errors.New("token invalid")
 	}
 
-	return parsedToken.Claims.(jwt.MapClaims)
-
+	return parsedToken.Claims.(jwt.MapClaims), tokenParseError
 }

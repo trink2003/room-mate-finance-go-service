@@ -5,7 +5,9 @@ type ErrorEnums struct {
 	ErrorMessage string
 }
 
-var ErrorConstant map[string]ErrorEnums = map[string]ErrorEnums{
+var LogPattern = "[%s] [%s] - %s"
+
+var ErrorConstant = map[string]ErrorEnums{
 	"SUCCESS": {
 		ErrorCode:    0,
 		ErrorMessage: "Success.",
@@ -29,5 +31,9 @@ var ErrorConstant map[string]ErrorEnums = map[string]ErrorEnums{
 	"AUTHENTICATE_FAILURE": {
 		ErrorCode:    4,
 		ErrorMessage: "Authenticate fail.",
+	},
+	"UNAUTHORIZED": {
+		ErrorCode:    5,
+		ErrorMessage: "Unauthorized.",
 	},
 }

@@ -27,7 +27,9 @@ func (h UserHandler) GetUsers(ginContext *gin.Context) {
 		return
 	}
 
-	ginContext.JSON(http.StatusOK, &user)
+	ginContext.JSON(http.StatusOK, &payload.ListUsersResponseBody{
+		Users: user,
+	})
 }
 
 func (h AuthHandler) AddNewUser(ginContext *gin.Context) {

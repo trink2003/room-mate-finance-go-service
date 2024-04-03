@@ -3,11 +3,16 @@ package service
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"github.com/gin-gonic/gin"
+	"github.com/golang-jwt/jwt/v5"
 	"io"
 	"log"
 	"net/http"
+	"room-mate-finance-go-service/constant"
+	"room-mate-finance-go-service/payload"
 	"room-mate-finance-go-service/utils"
+	"strings"
 )
 
 type BodyLogWriter struct {
@@ -38,14 +43,25 @@ func RequestLogger(c *gin.Context) {
 	if err := json.Compact(dst, body); err != nil && len(body) > 0 {
 		panic(err)
 	}
-	log.Printf(
-		"%s - Request info:\n\t- header: %s\n\t- url: %s\n\t- method: %s\n\t- proto: %s\n\t- payload:\n\t%s",
-		utils.GetTraceId(c),
+	message := fmt.Sprintf(
+		"Request info:\n\t- header: %s\n\t- url: %s\n\t- method: %s\n\t- proto: %s\n\t- payload:\n\t%s",
 		c.Request.Header,
 		c.Request.RequestURI,
 		c.Request.Method,
 		c.Request.Proto,
 		dst.String(),
+	)
+	currentUser := "unknown"
+	claimFromGinContext, _ := c.Get("auth")
+	if claimFromGinContext != nil {
+		claims := claimFromGinContext.(jwt.MapClaims)
+		currentUser = claims["sub"].(string)
+	}
+	log.Printf(
+		constant.LogPattern,
+		utils.GetTraceId(c),
+		currentUser,
+		message,
 	)
 	c.Next()
 	// latency := time.Since(t)
@@ -63,13 +79,45 @@ func ResponseLogger(c *gin.Context) {
 	c.Next()
 
 	statusCode := c.Writer.Status()
-	log.Printf(
-		"%s - Response info:\n\t- status code: %s\n\t- method: %s\n\t- url: %s\n\t- payload:\n\t%s",
-		utils.GetTraceId(c),
+	message := fmt.Sprintf(
+		"Response info:\n\t- status code: %s\n\t- method: %s\n\t- url: %s\n\t- payload:\n\t%s",
 		statusCode,
 		c.Request.Method,
 		c.Request.RequestURI,
 		blw.body.String(),
 	)
+	currentUser := "unknown"
+	claimFromGinContext, _ := c.Get("auth")
+	if claimFromGinContext != nil {
+		claims := claimFromGinContext.(jwt.MapClaims)
+		currentUser = claims["sub"].(string)
+	}
+	log.Printf(
+		constant.LogPattern,
+		utils.GetTraceId(c),
+		currentUser,
+		message,
+	)
 
+}
+
+func Authentication(c *gin.Context) {
+	token := c.Request.Header.Get("Authorization")
+	var mapClaims jwt.MapClaims
+	var err error
+	if strings.Contains(token, "Bearer") {
+		mapClaims, err = utils.VerifyJwtToken(token[7:])
+	} else {
+		mapClaims, err = utils.VerifyJwtToken(token)
+	}
+	if err != nil {
+		c.AbortWithStatusJSON(http.StatusUnauthorized, &payload.ErrorResponse{
+			Trace:        utils.GetTraceId(c),
+			ErrorCode:    constant.ErrorConstant["UNAUTHORIZED"].ErrorCode,
+			ErrorMessage: constant.ErrorConstant["UNAUTHORIZED"].ErrorMessage,
+		})
+		return
+	}
+	c.Set("auth", mapClaims)
+	c.Next()
 }
