@@ -28,7 +28,7 @@ func RegisterRoutes(router *gin.Engine, db *gorm.DB) {
 
 	authRouter := router.Group("/auth")
 	authRouter.POST("/register", authHandler.AddNewUser)
-	authRouter.POST("/login", authHandler.AddNewUser)
+	authRouter.POST("/login", authHandler.Login)
 
 	userRouter := router.Group("/user")
 	userRouter.POST("/get_all_active_user", userHandler.GetUsers)

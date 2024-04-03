@@ -70,12 +70,12 @@ func GenerateJwtToken(username string, role ...string) string {
 
 	claims := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
 		"sub": username,                                                       // Subject (user identifier)
-		"iss": "todo-app",                                                     // Issuer
+		"iss": "room-mate-finance-go-service",                                 // Issuer
 		"aud": role,                                                           // Audience (user role)
 		"exp": time.Now().Add(time.Duration(expireTime) * time.Minute).Unix(), // Expiration time
 		"iat": time.Now().Unix(),                                              // Issued at
 	})
-	tokenString, signedStringError := claims.SignedString(secretKey)
+	tokenString, signedStringError := claims.SignedString([]byte(secretKey))
 	if signedStringError != nil {
 		panic(signedStringError)
 	}
