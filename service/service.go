@@ -4,6 +4,7 @@ import (
 	context2 "context"
 	"net/http"
 	"room-mate-finance-go-service/model"
+	"room-mate-finance-go-service/payload"
 	"room-mate-finance-go-service/utils"
 	"time"
 
@@ -11,15 +12,6 @@ import (
 	"github.com/google/uuid"
 	"gorm.io/gorm"
 )
-
-type UserRegisterRequestBodyValue struct {
-	Username string `json:"username" binding:"required"`
-	Password string `json:"password" binding:"required"`
-}
-
-type UserRegisterRequestBody struct {
-	Request UserRegisterRequestBodyValue `json:"request"`
-}
 
 func (h UserHandler) GetUsers(ginContext *gin.Context) {
 
@@ -36,14 +28,14 @@ func (h UserHandler) GetUsers(ginContext *gin.Context) {
 	ginContext.JSON(http.StatusOK, &user)
 }
 
-func (h UserHandler) AddNewUser(ginContext *gin.Context) {
+func (h AuthHandler) AddNewUser(ginContext *gin.Context) {
 
 	context := context2.Background()
 	traceId := uuid.New().String()
 
 	context = context2.WithValue(context, "traceId", traceId)
 
-	requestPayload := UserRegisterRequestBody{}
+	requestPayload := payload.UserRegisterRequestBody{}
 
 	if err := ginContext.ShouldBindJSON(&requestPayload); err != nil {
 		ginContext.AbortWithStatusJSON(http.StatusBadRequest, gin.H{
@@ -99,6 +91,10 @@ func (h UserHandler) AddNewUser(ginContext *gin.Context) {
 		return
 	}
 	ginContext.JSON(http.StatusOK, user)
+}
+
+func (h AuthHandler) Login(ginContext *gin.Context) {
+
 }
 
 func SaveNewUser(db *gorm.DB, user *model.Users, ctx context2.Context) error {

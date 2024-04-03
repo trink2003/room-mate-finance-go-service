@@ -1,32 +1,24 @@
 package service
 
 import (
-	"bytes"
-	"encoding/json"
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
-	"io"
-	"log"
-	"net/http"
-	"room-mate-finance-go-service/utils"
 )
 
 type UserHandler struct {
 	DB *gorm.DB
 }
 
-type bodyLogWriter struct {
-	gin.ResponseWriter
-	body *bytes.Buffer
-}
-
-func (w bodyLogWriter) Write(b []byte) (int, error) {
-	w.body.Write(b)
-	return w.ResponseWriter.Write(b)
+type AuthHandler struct {
+	DB *gorm.DB
 }
 
 func RegisterRoutes(router *gin.Engine, db *gorm.DB) {
-	h := &UserHandler{
+	userHandler := &UserHandler{
+		DB: db,
+	}
+
+	authHandler := &AuthHandler{
 		DB: db,
 	}
 
@@ -35,62 +27,9 @@ func RegisterRoutes(router *gin.Engine, db *gorm.DB) {
 	router.Use(ResponseLogger)
 
 	authRouter := router.Group("/auth")
-	authRouter.POST("/register", h.AddNewUser)
+	authRouter.POST("/register", authHandler.AddNewUser)
+	authRouter.POST("/login", authHandler.AddNewUser)
 
 	userRouter := router.Group("/user")
-	userRouter.POST("/get_all_active_user", h.GetUsers)
-}
-
-func ErrorHandler(c *gin.Context) {
-	utils.CheckAndSetTraceId(c)
-	if c.Errors != nil && len(c.Errors.Errors()) != 0 {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": c.Errors.Errors()})
-	}
-}
-
-func RequestLogger(c *gin.Context) {
-	utils.CheckAndSetTraceId(c)
-	// t := time.Now()
-	var buf bytes.Buffer
-	tee := io.TeeReader(c.Request.Body, &buf)
-	body, _ := io.ReadAll(tee)
-	c.Request.Body = io.NopCloser(&buf)
-	dst := &bytes.Buffer{}
-	if err := json.Compact(dst, body); err != nil && len(body) > 0 {
-		panic(err)
-	}
-	log.Printf(
-		"%s - Request info:\n\t- header: %s\n\t- url: %s\n\t- method: %s\n\t- proto: %s\n\t- payload:\n\t%s",
-		utils.GetTraceId(c),
-		c.Request.Header,
-		c.Request.RequestURI,
-		c.Request.Method,
-		c.Request.Proto,
-		dst.String(),
-	)
-	c.Next()
-	// latency := time.Since(t)
-	// log.Printf("%s %s %s %s\n",
-	// 	c.Request.RequestURI,
-	// )
-}
-
-func ResponseLogger(c *gin.Context) {
-	utils.CheckAndSetTraceId(c)
-	c.Writer.Header().Set("X-Content-Type-Options", "nosniff")
-	blw := &bodyLogWriter{body: bytes.NewBufferString(""), ResponseWriter: c.Writer}
-	c.Writer = blw
-
-	c.Next()
-
-	statusCode := c.Writer.Status()
-	log.Printf(
-		"%s - Response info:\n\t- status code: %s\n\t- method: %s\n\t- url: %s\n\t- payload:\n\t%s",
-		utils.GetTraceId(c),
-		statusCode,
-		c.Request.Method,
-		c.Request.RequestURI,
-		blw.body.String(),
-	)
-
+	userRouter.POST("/get_all_active_user", userHandler.GetUsers)
 }
