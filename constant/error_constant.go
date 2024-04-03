@@ -5,7 +5,7 @@ type ErrorEnums struct {
 	ErrorMessage string
 }
 
-var LogPattern = "[%s] [%s] - %s"
+const LogPattern = "[%s] [%s] - %s"
 
 var ErrorConstant = map[string]ErrorEnums{
 	"SUCCESS": {
@@ -35,5 +35,17 @@ var ErrorConstant = map[string]ErrorEnums{
 	"UNAUTHORIZED": {
 		ErrorCode:    5,
 		ErrorMessage: "Unauthorized.",
+	},
+	"DATA_FORMAT_ERROR": {
+		ErrorCode:    6,
+		ErrorMessage: "Data format error.",
+	},
+	"USER_NOT_EXISTED": {
+		ErrorCode:    7,
+		ErrorMessage: "User not existed.",
+	},
+	"INVALID_NUMBER_OF_USER": {
+		ErrorCode:    8,
+		ErrorMessage: "The number of users in the same room must be greater than 2.",
 	},
 }

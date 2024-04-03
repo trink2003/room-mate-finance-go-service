@@ -28,6 +28,17 @@ type ListUsersResponseBody struct {
 	Users []model.Users `json:"listOfUsers"`
 }
 
+type ExpenseRequestBodyValue struct {
+	Purpose         string  `json:"purpose" binding:"required"`
+	Amount          float64 `json:"amount" binding:"required"`
+	IsParticipating bool    `json:"isParticipating" binding:"required"`
+	UserToPaid      []int64 `json:"userToPaid" binding:"required"`
+}
+
+type ExpenseRequestBody struct {
+	Request ExpenseRequestBodyValue `json:"request"`
+}
+
 type ErrorResponse struct {
 	Trace        string `json:"trace"`
 	ErrorCode    int    `json:"errorCode"`
