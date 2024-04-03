@@ -3,6 +3,7 @@ package service
 import (
 	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt/v5"
+	"gorm.io/gorm/clause"
 	"net/http"
 	"room-mate-finance-go-service/constant"
 	"room-mate-finance-go-service/model"
@@ -84,7 +85,7 @@ func (h *ExpenseHandler) AddNewExpense(c *gin.Context) {
 
 	var numberOfActiveUser int64 = 0
 
-	h.DB.
+	h.DB.Clauses(clause.Locking{Strength: "UPDATE"}).
 		Model(&model.Users{}).
 		Where(
 			h.DB.
@@ -104,7 +105,7 @@ func (h *ExpenseHandler) AddNewExpense(c *gin.Context) {
 
 	var allActiveUserInList []model.Users
 
-	h.DB.
+	h.DB.Clauses(clause.Locking{Strength: "UPDATE"}).
 		Where(
 			h.DB.
 				Where(
