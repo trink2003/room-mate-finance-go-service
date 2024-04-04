@@ -2,10 +2,10 @@ package config
 
 import (
 	"fmt"
+	"github.com/charmbracelet/log"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
-	"log"
 	"os"
 	"time"
 )
@@ -50,11 +50,20 @@ func InitDatabaseConnection() (db *gorm.DB, err error) {
 		databaseName,
 		databasePort,
 	)
+	log.Info(
+		fmt.Sprintf(
+			"Database connect info:\n    - databaseHost: %s\n    - databaseUsername: %s\n    - databaseName: %s\n    - databasePort: %s",
+			databaseHost,
+			databaseUsername,
+			databaseName,
+			databasePort,
+		),
+	)
 	db, err = gorm.Open(postgres.Open(dsn), &gorm.Config{
 		Logger: logger.Default.LogMode(logger.Info),
 	})
 	if err != nil {
-		log.Fatalln(err)
+		log.Error(err)
 		return db, err
 	}
 

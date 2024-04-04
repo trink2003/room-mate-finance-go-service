@@ -4,16 +4,17 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"github.com/gin-gonic/gin"
-	"github.com/golang-jwt/jwt/v5"
 	"io"
-	"log"
 	"net/http"
 	"room-mate-finance-go-service/constant"
 	"room-mate-finance-go-service/payload"
 	"room-mate-finance-go-service/utils"
 	"strconv"
 	"strings"
+
+	"github.com/charmbracelet/log"
+	"github.com/gin-gonic/gin"
+	"github.com/golang-jwt/jwt/v5"
 )
 
 type BodyLogWriter struct {
@@ -58,15 +59,17 @@ func RequestLogger(c *gin.Context) {
 		claims := claimFromGinContext.(jwt.MapClaims)
 		currentUser = claims["sub"].(string)
 	}
-	log.Printf(
-		constant.LogPattern,
-		utils.GetTraceId(c),
-		currentUser,
-		message,
+	log.Info(
+		fmt.Sprintf(
+			constant.LogPattern,
+			utils.GetTraceId(c),
+			currentUser,
+			message,
+		),
 	)
 	c.Next()
 	// latency := time.Since(t)
-	// log.Printf("%s %s %s %s\n",
+	// log.Info("%s %s %s %s\n",
 	// 	c.Request.RequestURI,
 	// )
 }
@@ -93,11 +96,13 @@ func ResponseLogger(c *gin.Context) {
 		claims := claimFromGinContext.(jwt.MapClaims)
 		currentUser = claims["sub"].(string)
 	}
-	log.Printf(
-		constant.LogPattern,
-		utils.GetTraceId(c),
-		currentUser,
-		message,
+	log.Info(
+		fmt.Sprintf(
+			constant.LogPattern,
+			utils.GetTraceId(c),
+			currentUser,
+			message,
+		),
 	)
 
 }

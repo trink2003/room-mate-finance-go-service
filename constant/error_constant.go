@@ -5,7 +5,7 @@ type ErrorEnums struct {
 	ErrorMessage string
 }
 
-const LogPattern = "[%s] [%s] - %s"
+const LogPattern = "[%s] [%s] ⮞⮞ %s"
 
 var ErrorConstant = map[string]ErrorEnums{
 	"SUCCESS": {

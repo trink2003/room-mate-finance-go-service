@@ -3,10 +3,6 @@ package service
 import (
 	"context"
 	"fmt"
-	"github.com/gin-gonic/gin"
-	"gorm.io/gorm"
-	"gorm.io/gorm/clause"
-	"log"
 	"math/big"
 	"net/http"
 	"room-mate-finance-go-service/constant"
@@ -16,6 +12,11 @@ import (
 	"slices"
 	"strconv"
 	"time"
+
+	"github.com/charmbracelet/log"
+	"github.com/gin-gonic/gin"
+	"gorm.io/gorm"
+	"gorm.io/gorm/clause"
 )
 
 func (h *ExpenseHandler) AddNewExpense(c *gin.Context) {
@@ -148,11 +149,13 @@ func (h *ExpenseHandler) AddNewExpense(c *gin.Context) {
 		})
 		return
 	}
-	log.Printf(
-		constant.LogPattern,
-		utils.GetTraceId(c),
-		*currentUser,
-		fmt.Sprintf("bought user is user with id: %s", strconv.FormatInt(boughtUser.BaseEntity.Id, 10)),
+	log.Info(
+		fmt.Sprintf(
+			constant.LogPattern,
+			utils.GetTraceId(c),
+			*currentUser,
+			fmt.Sprintf("bought user is user with id: %s", strconv.FormatInt(boughtUser.BaseEntity.Id, 10)),
+		),
 	)
 
 	expense := model.ListOfExpenses{
@@ -166,11 +169,13 @@ func (h *ExpenseHandler) AddNewExpense(c *gin.Context) {
 	// Calculate the divisor based on participation
 	divisor := new(big.Float).SetInt64(int64(len(requestPayload.Request.UserToPaid)))
 	if requestPayload.Request.IsParticipating {
-		log.Printf(
-			constant.LogPattern,
-			utils.GetTraceId(c),
-			*currentUser,
-			"this user will participate to this expense",
+		log.Info(
+			fmt.Sprintf(
+				constant.LogPattern,
+				utils.GetTraceId(c),
+				*currentUser,
+				"this user will participate to this expense",
+			),
 		)
 		divisor.Add(divisor, big.NewFloat(1))
 	}
@@ -186,17 +191,19 @@ func (h *ExpenseHandler) AddNewExpense(c *gin.Context) {
 	roundedNumber, _ := scaledNumber.Int(nil)
 
 	finalEquallyDividedAmount := new(big.Float).Quo(new(big.Float).SetInt(roundedNumber), big.NewFloat(100))
-	log.Printf(
-		constant.LogPattern,
-		utils.GetTraceId(c),
-		*currentUser,
+	log.Info(
 		fmt.Sprintf(
-			"amount info:\n    - finalEquallyDividedAmount: %s\n\t- requestAmount: %s\n\t- equallyDividedAmount: %s\n\t- divisor: %s\n\t- finalEquallyDividedAmount: %s",
-			finalEquallyDividedAmount,
-			requestAmount,
-			equallyDividedAmount,
-			divisor,
-			finalEquallyDividedAmount,
+			constant.LogPattern,
+			utils.GetTraceId(c),
+			*currentUser,
+			fmt.Sprintf(
+				"amount info:\n    - finalEquallyDividedAmount: %s\n\t- requestAmount: %s\n\t- equallyDividedAmount: %s\n\t- divisor: %s\n\t- finalEquallyDividedAmount: %s",
+				finalEquallyDividedAmount,
+				requestAmount,
+				equallyDividedAmount,
+				divisor,
+				finalEquallyDividedAmount,
+			),
 		),
 	)
 
