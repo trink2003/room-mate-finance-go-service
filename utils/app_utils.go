@@ -105,3 +105,18 @@ func VerifyJwtToken(token string) (jwt.MapClaims, error) {
 
 	return parsedToken.Claims.(jwt.MapClaims), tokenParseError
 }
+
+func GetCurrentUsername(c *gin.Context) (username *string, err error) {
+
+	currentUser, isCurrentUserExist := c.Get("auth")
+
+	if isCurrentUserExist == false {
+		return nil, errors.New("can not get current username")
+	}
+
+	claim := currentUser.(jwt.MapClaims)
+
+	currentUsername := claim["sub"].(string)
+
+	return &currentUsername, nil
+}

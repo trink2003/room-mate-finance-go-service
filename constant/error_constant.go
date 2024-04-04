@@ -48,4 +48,8 @@ var ErrorConstant = map[string]ErrorEnums{
 		ErrorCode:    8,
 		ErrorMessage: "The number of users in the same room must be greater than 2.",
 	},
+	"INVALID_USER_TO_PAID_LIST": {
+		ErrorCode:    9,
+		ErrorMessage: "The buyer must not be on the list of payers.",
+	},
 }

@@ -1,6 +1,8 @@
 package model
 
-import "time"
+import (
+	"time"
+)
 
 type BaseEntity struct {
 	Id        int64     `json:"id" gorm:"column:id;primaryKey;"`
@@ -16,25 +18,26 @@ type Users struct {
 	Username       string           `json:"username" gorm:"column:username;"`
 	Password       string           `json:"-" gorm:"column:password;"`
 	UserUid        string           `json:"userUid" gorm:"column:user_uid;"`
-	ListOfExpenses []ListOfExpenses `gorm:"foreignKey:UsersID"`
-	UserToPaid     []DebitUser      `gorm:"foreignKey:UserToPaidID"`
-	PaidToUser     []DebitUser      `gorm:"foreignKey:PaidToUserID"`
+	ListOfExpenses []ListOfExpenses `json:"listOfExpenses" gorm:"foreignKey:BoughtByUserID"`
+	UserToPaid     []DebitUser      `json:"userToPaid" gorm:"foreignKey:UserToPaidID"`
+	PaidToUser     []DebitUser      `json:"paidToUser" gorm:"foreignKey:PaidToUserID"`
 }
 
 type ListOfExpenses struct {
-	BaseEntity BaseEntity `gorm:"embedded" json:"baseInfo"`
-	Purpose    string     `json:"purpose" gorm:"column:purpose"`
-	Amount     float64    `json:"amount" gorm:"column:amount"`
-	UsersID    int        `json:"-"`
-	Users      Users      `json:"boughtByUser" gorm:"column:bought_by_user;references:id"`
+	BaseEntity     BaseEntity  `gorm:"embedded" json:"baseInfo"`
+	Purpose        string      `json:"purpose" gorm:"column:purpose"`
+	Amount         float64     `json:"amount" gorm:"column:amount"`
+	BoughtByUserID int64       `json:"-" gorm:"column:bought_by_user;references:id"`
+	Users          Users       `json:"users" gorm:"->;<-:false;-:migration;foreignKey:Id"`
+	DebitUser      []DebitUser `json:"debitUser" gorm:"foreignKey:ListOfExpensesID"`
 }
 
 type DebitUser struct {
-	BaseEntity   BaseEntity `gorm:"embedded" json:"baseInfo"`
-	UserToPaidID int        `json:"-" gorm:"column:user_to_paid"`
-	PaidToUserID int        `json:"-" gorm:"column:paid_to_user"`
-	UserToPaid   Users      `json:"userToPaid" gorm:"column:user_to_paid;references:id"`
-	PaidToUser   Users      `json:"paidToUser" gorm:"column:paid_to_user;references:id"`
+	BaseEntity       BaseEntity `gorm:"embedded" json:"baseInfo"`
+	Amount           float64    `json:"amount" gorm:"column:amount"`
+	ListOfExpensesID int64      `json:"-" gorm:"column:expense;references:id"`
+	UserToPaidID     int64      `json:"-" gorm:"column:user_to_paid;references:id"`
+	PaidToUserID     int64      `json:"-" gorm:"column:paid_to_user;references:id"`
 }
 
 type Tabler interface {
@@ -44,6 +47,11 @@ type Tabler interface {
 func (Users) TableName() string {
 	return "users"
 }
+
 func (ListOfExpenses) TableName() string {
 	return "list_of_expenses"
+}
+
+func (DebitUser) TableName() string {
+	return "debit_user"
 }

@@ -1,14 +1,18 @@
 package service
 
 import (
+	"context"
 	"github.com/gin-gonic/gin"
-	"github.com/golang-jwt/jwt/v5"
+	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
+	"math/big"
 	"net/http"
 	"room-mate-finance-go-service/constant"
 	"room-mate-finance-go-service/model"
 	"room-mate-finance-go-service/payload"
 	"room-mate-finance-go-service/utils"
+	"slices"
+	"time"
 )
 
 func (h *ExpenseHandler) AddNewExpense(c *gin.Context) {
@@ -50,18 +54,20 @@ func (h *ExpenseHandler) AddNewExpense(c *gin.Context) {
 		return
 	}
 
-	currentUser, isCurrentUserExist := c.Get("auth")
+	currentUser, isCurrentUserExist := utils.GetCurrentUsername(c)
 
-	if isCurrentUserExist == false {
+	ctx := context.Background()
+
+	ctx = context.WithValue(ctx, "username", *currentUser)
+
+	if isCurrentUserExist != nil {
 		c.AbortWithStatusJSON(http.StatusBadRequest, &payload.ErrorResponse{
 			Trace:        utils.GetTraceId(c),
 			ErrorCode:    constant.ErrorConstant["UNAUTHORIZED"].ErrorCode,
-			ErrorMessage: constant.ErrorConstant["UNAUTHORIZED"].ErrorMessage + " Who are you?",
+			ErrorMessage: constant.ErrorConstant["UNAUTHORIZED"].ErrorMessage + " " + isCurrentUserExist.Error(),
 		})
 		return
 	}
-
-	claim := currentUser.(jwt.MapClaims)
 
 	boughtUser := model.Users{}
 
@@ -70,7 +76,7 @@ func (h *ExpenseHandler) AddNewExpense(c *gin.Context) {
 			BaseEntity: model.BaseEntity{
 				Active: true,
 			},
-			Username: claim["sub"].(string),
+			Username: *currentUser,
 		},
 	).Find(&boughtUser)
 
@@ -85,7 +91,7 @@ func (h *ExpenseHandler) AddNewExpense(c *gin.Context) {
 
 	var numberOfActiveUser int64 = 0
 
-	h.DB.Clauses(clause.Locking{Strength: "UPDATE"}).
+	h.DB. /*Clauses(clause.Locking{Strength: "UPDATE"}).*/
 		Model(&model.Users{}).
 		Where(
 			h.DB.
@@ -131,8 +137,90 @@ func (h *ExpenseHandler) AddNewExpense(c *gin.Context) {
 		return
 	}
 
+	if slices.Contains(requestPayload.Request.UserToPaid, boughtUser.BaseEntity.Id) {
+		c.AbortWithStatusJSON(http.StatusBadRequest, &payload.ErrorResponse{
+			Trace:        utils.GetTraceId(c),
+			ErrorCode:    constant.ErrorConstant["INVALID_USER_TO_PAID_LIST"].ErrorCode,
+			ErrorMessage: constant.ErrorConstant["INVALID_USER_TO_PAID_LIST"].ErrorMessage,
+		})
+		return
+	}
+
+	expense := model.ListOfExpenses{
+		Purpose:        requestPayload.Request.Purpose,
+		Amount:         requestPayload.Request.Amount,
+		BoughtByUserID: boughtUser.BaseEntity.Id,
+	}
+
+	var equallyDividedAmount *big.Float
+
+	// Calculate the divisor based on participation
+	divisor := new(big.Float).SetInt64(int64(len(requestPayload.Request.UserToPaid)))
+	if requestPayload.Request.IsParticipating {
+		divisor.Add(divisor, big.NewFloat(1))
+	}
+
+	// Perform the division
+	equallyDividedAmount = new(big.Float).Quo(new(big.Float).SetFloat64(requestPayload.Request.Amount), divisor)
+	equallyDividedAmount.SetPrec(2) // Set precision to 2 decimal places
+
+	scaledNumber := new(big.Float).Mul(equallyDividedAmount, big.NewFloat(100))
+
+	roundedNumber, _ := scaledNumber.Int(nil)
+
+	finalEquallyDividedAmount := new(big.Float).Quo(new(big.Float).SetInt(roundedNumber), big.NewFloat(100))
+
+	expenseTransactionError := h.DB.Transaction(
+		func(tx *gorm.DB) error {
+			if saveNewExpenseErr := SaveNewExpense(tx, &expense, ctx); saveNewExpenseErr.Error != nil {
+				return saveNewExpenseErr.Error
+			}
+			paidAmount, _ := finalEquallyDividedAmount.Float64()
+			for _, user := range allActiveUserInList {
+				debitOfCurrentUser := model.DebitUser{
+					UserToPaidID:     user.BaseEntity.Id,
+					PaidToUserID:     boughtUser.BaseEntity.Id,
+					ListOfExpensesID: expense.BaseEntity.Id,
+					Amount:           paidAmount,
+				}
+				if saveNewDebitUserErr := SaveNewDebitUser(tx, &debitOfCurrentUser, ctx); saveNewDebitUserErr.Error != nil {
+					return saveNewDebitUserErr.Error
+				}
+			}
+			return nil
+		},
+	)
+	if expenseTransactionError != nil {
+		c.AbortWithStatusJSON(http.StatusBadRequest, &payload.ErrorResponse{
+			Trace:        utils.GetTraceId(c),
+			ErrorCode:    constant.ErrorConstant["QUERY_ERROR"].ErrorCode,
+			ErrorMessage: constant.ErrorConstant["QUERY_ERROR"].ErrorMessage + expenseTransactionError.Error(),
+		})
+		return
+	}
+
 	c.JSON(http.StatusOK, gin.H{
-		"ok": "ok",
+		"status": "ok",
 	})
 
+}
+
+func SaveNewExpense(db *gorm.DB, model *model.ListOfExpenses, ctx context.Context) *gorm.DB {
+	model.BaseEntity.Active = true
+	model.BaseEntity.CreatedAt = time.Now()
+	model.BaseEntity.UpdatedAt = time.Now()
+	model.BaseEntity.CreatedBy = ctx.Value("username").(string)
+	model.BaseEntity.UpdatedBy = ctx.Value("username").(string)
+
+	return db.Create(model)
+}
+
+func SaveNewDebitUser(db *gorm.DB, model *model.DebitUser, ctx context.Context) *gorm.DB {
+	model.BaseEntity.Active = true
+	model.BaseEntity.CreatedAt = time.Now()
+	model.BaseEntity.UpdatedAt = time.Now()
+	model.BaseEntity.CreatedBy = ctx.Value("username").(string)
+	model.BaseEntity.UpdatedBy = ctx.Value("username").(string)
+
+	return db.Create(model)
 }

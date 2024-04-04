@@ -16,9 +16,6 @@ import (
 func (h AuthHandler) AddNewUser(ginContext *gin.Context) {
 
 	context := context2.Background()
-	traceId := uuid.New().String()
-
-	context = context2.WithValue(context, "traceId", traceId)
 
 	requestPayload := payload.UserRegisterRequestBody{}
 
