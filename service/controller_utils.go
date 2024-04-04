@@ -12,6 +12,7 @@ import (
 	"room-mate-finance-go-service/constant"
 	"room-mate-finance-go-service/payload"
 	"room-mate-finance-go-service/utils"
+	"strconv"
 	"strings"
 )
 
@@ -81,7 +82,7 @@ func ResponseLogger(c *gin.Context) {
 	statusCode := c.Writer.Status()
 	message := fmt.Sprintf(
 		"Response info:\n\t- status code: %s\n\t- method: %s\n\t- url: %s\n\t- payload:\n\t%s",
-		statusCode,
+		strconv.Itoa(statusCode),
 		c.Request.Method,
 		c.Request.RequestURI,
 		blw.body.String(),

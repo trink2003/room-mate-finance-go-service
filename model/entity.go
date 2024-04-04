@@ -28,7 +28,7 @@ type ListOfExpenses struct {
 	Purpose        string      `json:"purpose" gorm:"column:purpose"`
 	Amount         float64     `json:"amount" gorm:"column:amount"`
 	BoughtByUserID int64       `json:"-" gorm:"column:bought_by_user;references:id"`
-	Users          Users       `json:"users" gorm:"column:bought_by_user;->;<-:false;-:migration;foreignKey:Id"`
+	Users          Users       `json:"users" gorm:"->;<-:false;-:migration;foreignKey:Id"`
 	DebitUser      []DebitUser `json:"debitUser" gorm:"foreignKey:ListOfExpensesID"`
 }
 
@@ -38,8 +38,8 @@ type DebitUser struct {
 	ListOfExpensesID int64      `json:"-" gorm:"column:expense;references:id"`
 	UserToPaidID     int64      `json:"-" gorm:"column:user_to_paid;references:id"`
 	PaidToUserID     int64      `json:"-" gorm:"column:paid_to_user;references:id"`
-	UserToPaid       Users      `json:"-" gorm:"column:user_to_paid;->;<-:false;-:migration;foreignKey:Id"`
-	PaidToUser       Users      `json:"-" gorm:"column:paid_to_user;->;<-:false;-:migration;foreignKey:Id"`
+	UserToPaid       Users      `json:"-" gorm:"->;<-:false;-:migration;foreignKey:Id"`
+	PaidToUser       Users      `json:"-" gorm:"->;<-:false;-:migration;foreignKey:Id"`
 }
 
 type Tabler interface {

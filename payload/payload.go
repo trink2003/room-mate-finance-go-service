@@ -31,7 +31,7 @@ type ListUsersResponseBody struct {
 type ExpenseRequestBodyValue struct {
 	Purpose         string  `json:"purpose" binding:"required"`
 	Amount          float64 `json:"amount" binding:"required"`
-	IsParticipating bool    `json:"isParticipating" binding:"required"`
+	IsParticipating bool    `json:"isParticipating"`
 	UserToPaid      []int64 `json:"userToPaid" binding:"required"`
 }
 
