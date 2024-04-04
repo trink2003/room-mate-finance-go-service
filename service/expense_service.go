@@ -229,8 +229,19 @@ func (h *ExpenseHandler) AddNewExpense(c *gin.Context) {
 		return
 	}
 
+	var savedExpense []model.ListOfExpenses
+
+	h.DB.Preload("Users").Preload("DebitUser").Where(
+		model.ListOfExpenses{
+			BaseEntity: model.BaseEntity{
+				Id: expense.BaseEntity.Id,
+			},
+		},
+	).Find(&savedExpense)
+
 	c.JSON(http.StatusOK, gin.H{
 		"status": "ok",
+		"info":   savedExpense,
 	})
 
 }

@@ -28,7 +28,7 @@ type ListOfExpenses struct {
 	Purpose        string      `json:"purpose" gorm:"column:purpose"`
 	Amount         float64     `json:"amount" gorm:"column:amount"`
 	BoughtByUserID int64       `json:"-" gorm:"column:bought_by_user;references:id"`
-	Users          Users       `json:"users" gorm:"->;<-:false;-:migration;foreignKey:Id"`
+	Users          Users       `json:"expenseOwner" gorm:"->;<-:false;-:migration;foreignKey:Id"`
 	DebitUser      []DebitUser `json:"debitUser" gorm:"foreignKey:ListOfExpensesID"`
 }
 
