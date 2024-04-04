@@ -22,7 +22,7 @@ func (h *ExpenseHandler) AddNewExpense(c *gin.Context) {
 	requestPayload := payload.ExpenseRequestBody{}
 
 	if err := c.ShouldBindJSON(&requestPayload); err != nil {
-		c.AbortWithStatusJSON(http.StatusBadRequest, &payload.ErrorResponse{
+		c.AbortWithStatusJSON(http.StatusBadRequest, &payload.Response{
 			Trace:        utils.GetTraceId(c),
 			ErrorCode:    constant.ErrorConstant["JSON_BINDING_ERROR"].ErrorCode,
 			ErrorMessage: constant.ErrorConstant["JSON_BINDING_ERROR"].ErrorMessage + " " + err.Error(),
@@ -31,7 +31,7 @@ func (h *ExpenseHandler) AddNewExpense(c *gin.Context) {
 	}
 
 	if requestPayload.Request.Amount <= 0 {
-		c.AbortWithStatusJSON(http.StatusBadRequest, &payload.ErrorResponse{
+		c.AbortWithStatusJSON(http.StatusBadRequest, &payload.Response{
 			Trace:        utils.GetTraceId(c),
 			ErrorCode:    constant.ErrorConstant["DATA_FORMAT_ERROR"].ErrorCode,
 			ErrorMessage: constant.ErrorConstant["DATA_FORMAT_ERROR"].ErrorMessage + " Amount need to be equal or greater than 0",
@@ -40,7 +40,7 @@ func (h *ExpenseHandler) AddNewExpense(c *gin.Context) {
 	}
 
 	if len(requestPayload.Request.UserToPaid) == 0 {
-		c.AbortWithStatusJSON(http.StatusBadRequest, &payload.ErrorResponse{
+		c.AbortWithStatusJSON(http.StatusBadRequest, &payload.Response{
 			Trace:        utils.GetTraceId(c),
 			ErrorCode:    constant.ErrorConstant["DATA_FORMAT_ERROR"].ErrorCode,
 			ErrorMessage: constant.ErrorConstant["DATA_FORMAT_ERROR"].ErrorMessage + " List of user need to pay must be not empty",
@@ -49,7 +49,7 @@ func (h *ExpenseHandler) AddNewExpense(c *gin.Context) {
 	}
 
 	if requestPayload.Request.Purpose == "" {
-		c.AbortWithStatusJSON(http.StatusBadRequest, &payload.ErrorResponse{
+		c.AbortWithStatusJSON(http.StatusBadRequest, &payload.Response{
 			Trace:        utils.GetTraceId(c),
 			ErrorCode:    constant.ErrorConstant["DATA_FORMAT_ERROR"].ErrorCode,
 			ErrorMessage: constant.ErrorConstant["DATA_FORMAT_ERROR"].ErrorMessage + " What is your purpose of this expense?",
@@ -64,7 +64,7 @@ func (h *ExpenseHandler) AddNewExpense(c *gin.Context) {
 	ctx = context.WithValue(ctx, "username", *currentUser)
 
 	if isCurrentUserExist != nil {
-		c.AbortWithStatusJSON(http.StatusBadRequest, &payload.ErrorResponse{
+		c.AbortWithStatusJSON(http.StatusBadRequest, &payload.Response{
 			Trace:        utils.GetTraceId(c),
 			ErrorCode:    constant.ErrorConstant["UNAUTHORIZED"].ErrorCode,
 			ErrorMessage: constant.ErrorConstant["UNAUTHORIZED"].ErrorMessage + " " + isCurrentUserExist.Error(),
@@ -84,7 +84,7 @@ func (h *ExpenseHandler) AddNewExpense(c *gin.Context) {
 	).Find(&boughtUser)
 
 	if boughtUser.BaseEntity.Id == 0 {
-		c.AbortWithStatusJSON(http.StatusBadRequest, &payload.ErrorResponse{
+		c.AbortWithStatusJSON(http.StatusBadRequest, &payload.Response{
 			Trace:        utils.GetTraceId(c),
 			ErrorCode:    constant.ErrorConstant["USER_NOT_EXISTED"].ErrorCode,
 			ErrorMessage: constant.ErrorConstant["USER_NOT_EXISTED"].ErrorMessage + " Who are you?",
@@ -132,7 +132,7 @@ func (h *ExpenseHandler) AddNewExpense(c *gin.Context) {
 		Find(&allActiveUserInList)
 
 	if numberOfActiveUser < 2 || len(allActiveUserInList) < len(requestPayload.Request.UserToPaid) {
-		c.AbortWithStatusJSON(http.StatusBadRequest, &payload.ErrorResponse{
+		c.AbortWithStatusJSON(http.StatusBadRequest, &payload.Response{
 			Trace:        utils.GetTraceId(c),
 			ErrorCode:    constant.ErrorConstant["INVALID_NUMBER_OF_USER"].ErrorCode,
 			ErrorMessage: constant.ErrorConstant["INVALID_NUMBER_OF_USER"].ErrorMessage,
@@ -141,7 +141,7 @@ func (h *ExpenseHandler) AddNewExpense(c *gin.Context) {
 	}
 
 	if slices.Contains(requestPayload.Request.UserToPaid, boughtUser.BaseEntity.Id) {
-		c.AbortWithStatusJSON(http.StatusBadRequest, &payload.ErrorResponse{
+		c.AbortWithStatusJSON(http.StatusBadRequest, &payload.Response{
 			Trace:        utils.GetTraceId(c),
 			ErrorCode:    constant.ErrorConstant["INVALID_USER_TO_PAID_LIST"].ErrorCode,
 			ErrorMessage: constant.ErrorConstant["INVALID_USER_TO_PAID_LIST"].ErrorMessage,
@@ -221,10 +221,10 @@ func (h *ExpenseHandler) AddNewExpense(c *gin.Context) {
 		},
 	)
 	if expenseTransactionError != nil {
-		c.AbortWithStatusJSON(http.StatusBadRequest, &payload.ErrorResponse{
+		c.AbortWithStatusJSON(http.StatusBadRequest, &payload.Response{
 			Trace:        utils.GetTraceId(c),
 			ErrorCode:    constant.ErrorConstant["QUERY_ERROR"].ErrorCode,
-			ErrorMessage: constant.ErrorConstant["QUERY_ERROR"].ErrorMessage + expenseTransactionError.Error(),
+			ErrorMessage: constant.ErrorConstant["QUERY_ERROR"].ErrorMessage + " " + expenseTransactionError.Error(),
 		})
 		return
 	}
@@ -239,11 +239,71 @@ func (h *ExpenseHandler) AddNewExpense(c *gin.Context) {
 		},
 	).Find(&savedExpense)
 
-	c.JSON(http.StatusOK, gin.H{
-		"status": "ok",
-		"info":   savedExpense,
+	c.JSON(http.StatusOK, &payload.Response{
+		Trace:        utils.GetTraceId(c),
+		ErrorCode:    constant.ErrorConstant["SUCCESS"].ErrorCode,
+		ErrorMessage: constant.ErrorConstant["SUCCESS"].ErrorMessage,
+		Response:     savedExpense,
 	})
 
+}
+
+func (h *ExpenseHandler) RemoveExpense(c *gin.Context) {
+
+	requestPayload := payload.RemoveExpenseBody{}
+	if err := c.ShouldBindJSON(&requestPayload); err != nil {
+		c.AbortWithStatusJSON(http.StatusBadRequest, &payload.Response{
+			Trace:        utils.GetTraceId(c),
+			ErrorCode:    constant.ErrorConstant["JSON_BINDING_ERROR"].ErrorCode,
+			ErrorMessage: constant.ErrorConstant["JSON_BINDING_ERROR"].ErrorMessage + " " + err.Error(),
+		})
+		return
+	}
+
+	var expense model.ListOfExpenses
+
+	h.DB.Preload("Users").Preload("DebitUser").Where(
+		model.ListOfExpenses{
+			BaseEntity: model.BaseEntity{
+				Id: requestPayload.Request,
+			},
+		},
+	).Find(&expense)
+
+	if expense.BaseEntity.Id == 0 {
+		c.AbortWithStatusJSON(http.StatusBadRequest, &payload.Response{
+			Trace:        utils.GetTraceId(c),
+			ErrorCode:    constant.ErrorConstant["EXPENSE_NOT_SUCCESS"].ErrorCode,
+			ErrorMessage: constant.ErrorConstant["EXPENSE_NOT_SUCCESS"].ErrorMessage,
+		})
+		return
+	}
+
+	transactionResult := h.DB.Transaction(func(tx *gorm.DB) error {
+		debitUserRemoveResult := tx.Delete(expense.DebitUser)
+		if debitUserRemoveResult.Error != nil {
+			return debitUserRemoveResult.Error
+		}
+		expenseRemoveResult := tx.Delete(expense)
+		if expenseRemoveResult.Error != nil {
+			return expenseRemoveResult.Error
+		}
+		return nil
+	})
+	if transactionResult != nil {
+		c.AbortWithStatusJSON(http.StatusBadRequest, &payload.Response{
+			Trace:        utils.GetTraceId(c),
+			ErrorCode:    constant.ErrorConstant["QUERY_ERROR"].ErrorCode,
+			ErrorMessage: constant.ErrorConstant["QUERY_ERROR"].ErrorMessage + " " + transactionResult.Error(),
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, &payload.Response{
+		Trace:        utils.GetTraceId(c),
+		ErrorCode:    constant.ErrorConstant["SUCCESS"].ErrorCode,
+		ErrorMessage: constant.ErrorConstant["SUCCESS"].ErrorMessage,
+	})
 }
 
 func SaveNewExpense(db *gorm.DB, model *model.ListOfExpenses, ctx context.Context) *gorm.DB {

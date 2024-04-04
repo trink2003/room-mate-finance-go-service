@@ -112,7 +112,7 @@ func Authentication(c *gin.Context) {
 		mapClaims, err = utils.VerifyJwtToken(token)
 	}
 	if err != nil {
-		c.AbortWithStatusJSON(http.StatusUnauthorized, &payload.ErrorResponse{
+		c.AbortWithStatusJSON(http.StatusUnauthorized, &payload.Response{
 			Trace:        utils.GetTraceId(c),
 			ErrorCode:    constant.ErrorConstant["UNAUTHORIZED"].ErrorCode,
 			ErrorMessage: constant.ErrorConstant["UNAUTHORIZED"].ErrorMessage,

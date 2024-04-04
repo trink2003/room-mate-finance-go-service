@@ -18,17 +18,9 @@ type ExpenseHandler struct {
 }
 
 func RegisterRoutes(router *gin.Engine, db *gorm.DB) {
-	userHandler := &UserHandler{
-		DB: db,
-	}
-
-	authHandler := &AuthHandler{
-		DB: db,
-	}
-
-	expenseHandler := &ExpenseHandler{
-		DB: db,
-	}
+	userHandler := &UserHandler{DB: db}
+	authHandler := &AuthHandler{DB: db}
+	expenseHandler := &ExpenseHandler{DB: db}
 
 	router.Use(ErrorHandler)
 	router.Use(RequestLogger)
@@ -43,4 +35,5 @@ func RegisterRoutes(router *gin.Engine, db *gorm.DB) {
 
 	expenseRouter := router.Group("/expense")
 	expenseRouter.POST("/create_new_expense", Authentication, expenseHandler.AddNewExpense)
+	expenseRouter.POST("/remove_expense", Authentication, expenseHandler.RemoveExpense)
 }

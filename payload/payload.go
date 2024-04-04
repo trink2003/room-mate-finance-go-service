@@ -36,11 +36,16 @@ type ExpenseRequestBodyValue struct {
 }
 
 type ExpenseRequestBody struct {
-	Request ExpenseRequestBodyValue `json:"request"`
+	Request ExpenseRequestBodyValue `json:"request" binding:"required"`
 }
 
-type ErrorResponse struct {
+type RemoveExpenseBody struct {
+	Request int64 `json:"request"`
+}
+
+type Response struct {
 	Trace        string `json:"trace"`
 	ErrorCode    int    `json:"errorCode"`
 	ErrorMessage string `json:"errorMessage"`
+	Response     any    `json:"response"`
 }

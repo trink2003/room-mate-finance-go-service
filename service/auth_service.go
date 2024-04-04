@@ -20,7 +20,7 @@ func (h AuthHandler) AddNewUser(ginContext *gin.Context) {
 	requestPayload := payload.UserRegisterRequestBody{}
 
 	if err := ginContext.ShouldBindJSON(&requestPayload); err != nil {
-		ginContext.AbortWithStatusJSON(http.StatusBadRequest, &payload.ErrorResponse{
+		ginContext.AbortWithStatusJSON(http.StatusBadRequest, &payload.Response{
 			Trace:        utils.GetTraceId(ginContext),
 			ErrorCode:    constant.ErrorConstant["JSON_BINDING_ERROR"].ErrorCode,
 			ErrorMessage: constant.ErrorConstant["JSON_BINDING_ERROR"].ErrorMessage + " " + err.Error(),
@@ -40,7 +40,7 @@ func (h AuthHandler) AddNewUser(ginContext *gin.Context) {
 		Find(&userInDatabase)
 
 	if userInDatabaseQueryResult.Error != nil {
-		ginContext.AbortWithStatusJSON(http.StatusBadRequest, &payload.ErrorResponse{
+		ginContext.AbortWithStatusJSON(http.StatusBadRequest, &payload.Response{
 			Trace:        utils.GetTraceId(ginContext),
 			ErrorCode:    constant.ErrorConstant["QUERY_ERROR"].ErrorCode,
 			ErrorMessage: constant.ErrorConstant["QUERY_ERROR"].ErrorMessage + userInDatabaseQueryResult.Error.Error(),
@@ -49,7 +49,7 @@ func (h AuthHandler) AddNewUser(ginContext *gin.Context) {
 	}
 
 	if userInDatabase.BaseEntity.Id != 0 {
-		ginContext.AbortWithStatusJSON(http.StatusBadRequest, &payload.ErrorResponse{
+		ginContext.AbortWithStatusJSON(http.StatusBadRequest, &payload.Response{
 			Trace:        utils.GetTraceId(ginContext),
 			ErrorCode:    constant.ErrorConstant["CREATE_DUPLICATE_USER"].ErrorCode,
 			ErrorMessage: constant.ErrorConstant["CREATE_DUPLICATE_USER"].ErrorMessage,
@@ -69,21 +69,27 @@ func (h AuthHandler) AddNewUser(ginContext *gin.Context) {
 	}
 
 	if result := SaveNewUser(h.DB, &user, context); result != nil {
-		ginContext.AbortWithStatusJSON(http.StatusBadRequest, &payload.ErrorResponse{
+		ginContext.AbortWithStatusJSON(http.StatusBadRequest, &payload.Response{
 			Trace:        utils.GetTraceId(ginContext),
 			ErrorCode:    constant.ErrorConstant["QUERY_ERROR"].ErrorCode,
 			ErrorMessage: constant.ErrorConstant["QUERY_ERROR"].ErrorMessage + result.Error(),
 		})
 		return
 	}
-	ginContext.JSON(http.StatusOK, user)
+
+	ginContext.JSON(http.StatusOK, &payload.Response{
+		Trace:        utils.GetTraceId(ginContext),
+		ErrorCode:    constant.ErrorConstant["SUCCESS"].ErrorCode,
+		ErrorMessage: constant.ErrorConstant["SUCCESS"].ErrorMessage,
+		Response:     user,
+	})
 }
 
 func (h AuthHandler) Login(ginContext *gin.Context) {
 	requestPayload := &payload.UserLoginRequestBody{}
 
 	if err := ginContext.ShouldBindJSON(&requestPayload); err != nil {
-		ginContext.AbortWithStatusJSON(http.StatusBadRequest, &payload.ErrorResponse{
+		ginContext.AbortWithStatusJSON(http.StatusBadRequest, &payload.Response{
 			Trace:        utils.GetTraceId(ginContext),
 			ErrorCode:    constant.ErrorConstant["JSON_BINDING_ERROR"].ErrorCode,
 			ErrorMessage: constant.ErrorConstant["JSON_BINDING_ERROR"].ErrorMessage + " " + err.Error(),
@@ -101,7 +107,7 @@ func (h AuthHandler) Login(ginContext *gin.Context) {
 		Find(&userInDatabase)
 
 	if userInDatabaseQueryResult.Error != nil {
-		ginContext.AbortWithStatusJSON(http.StatusBadRequest, &payload.ErrorResponse{
+		ginContext.AbortWithStatusJSON(http.StatusBadRequest, &payload.Response{
 			Trace:        utils.GetTraceId(ginContext),
 			ErrorCode:    constant.ErrorConstant["QUERY_ERROR"].ErrorCode,
 			ErrorMessage: constant.ErrorConstant["QUERY_ERROR"].ErrorMessage + userInDatabaseQueryResult.Error.Error(),
@@ -110,7 +116,7 @@ func (h AuthHandler) Login(ginContext *gin.Context) {
 	}
 
 	if userInDatabase.BaseEntity.Id == 0 {
-		ginContext.AbortWithStatusJSON(http.StatusBadRequest, &payload.ErrorResponse{
+		ginContext.AbortWithStatusJSON(http.StatusBadRequest, &payload.Response{
 			Trace:        utils.GetTraceId(ginContext),
 			ErrorCode:    constant.ErrorConstant["AUTHENTICATE_FAILURE"].ErrorCode,
 			ErrorMessage: constant.ErrorConstant["AUTHENTICATE_FAILURE"].ErrorMessage + " username invalid",
@@ -119,7 +125,7 @@ func (h AuthHandler) Login(ginContext *gin.Context) {
 	}
 
 	if comparePasswordError := utils.ComparePassword(requestPayload.Request.Password, userInDatabase.Password); comparePasswordError != nil {
-		ginContext.AbortWithStatusJSON(http.StatusBadRequest, &payload.ErrorResponse{
+		ginContext.AbortWithStatusJSON(http.StatusBadRequest, &payload.Response{
 			Trace:        utils.GetTraceId(ginContext),
 			ErrorCode:    constant.ErrorConstant["AUTHENTICATE_FAILURE"].ErrorCode,
 			ErrorMessage: constant.ErrorConstant["AUTHENTICATE_FAILURE"].ErrorMessage + " password invalid",
@@ -133,7 +139,12 @@ func (h AuthHandler) Login(ginContext *gin.Context) {
 		Token: token,
 	}
 
-	ginContext.JSON(http.StatusOK, response)
+	ginContext.JSON(http.StatusOK, &payload.Response{
+		Trace:        utils.GetTraceId(ginContext),
+		ErrorCode:    constant.ErrorConstant["SUCCESS"].ErrorCode,
+		ErrorMessage: constant.ErrorConstant["SUCCESS"].ErrorMessage,
+		Response:     response,
+	})
 
 }
 

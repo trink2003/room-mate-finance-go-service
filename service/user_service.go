@@ -14,7 +14,7 @@ func (h UserHandler) GetUsers(ginContext *gin.Context) {
 	var user []model.Users
 
 	if result := h.DB.Where("active is not null AND active is true ORDER BY id DESC").Find(&user); result.Error != nil {
-		ginContext.AbortWithStatusJSON(http.StatusBadRequest, &payload.ErrorResponse{
+		ginContext.AbortWithStatusJSON(http.StatusBadRequest, &payload.Response{
 			Trace:        utils.GetTraceId(ginContext),
 			ErrorCode:    constant.ErrorConstant["QUERY_ERROR"].ErrorCode,
 			ErrorMessage: constant.ErrorConstant["QUERY_ERROR"].ErrorMessage + result.Error.Error(),
@@ -22,7 +22,10 @@ func (h UserHandler) GetUsers(ginContext *gin.Context) {
 		return
 	}
 
-	ginContext.JSON(http.StatusOK, &payload.ListUsersResponseBody{
-		Users: user,
+	ginContext.JSON(http.StatusOK, &payload.Response{
+		Trace:        utils.GetTraceId(ginContext),
+		ErrorCode:    constant.ErrorConstant["SUCCESS"].ErrorCode,
+		ErrorMessage: constant.ErrorConstant["SUCCESS"].ErrorMessage,
+		Response:     user,
 	})
 }
