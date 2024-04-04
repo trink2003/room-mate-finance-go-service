@@ -306,6 +306,46 @@ func (h *ExpenseHandler) RemoveExpense(c *gin.Context) {
 	})
 }
 
+func (h *ExpenseHandler) ListExpense(c *gin.Context) {
+
+	requestPayload := payload.PageRequestBody{}
+	if err := c.ShouldBindJSON(&requestPayload); err != nil {
+		c.AbortWithStatusJSON(http.StatusBadRequest, &payload.Response{
+			Trace:        utils.GetTraceId(c),
+			ErrorCode:    constant.ErrorConstant["JSON_BINDING_ERROR"].ErrorCode,
+			ErrorMessage: constant.ErrorConstant["JSON_BINDING_ERROR"].ErrorMessage + " " + err.Error(),
+		})
+		return
+	}
+
+	if requestPayload.Request.PageSize == 0 || requestPayload.Request.PageNumber == 0 {
+		c.AbortWithStatusJSON(http.StatusBadRequest, &payload.Response{
+			Trace:        utils.GetTraceId(c),
+			ErrorCode:    constant.ErrorConstant["DATA_FORMAT_ERROR"].ErrorCode,
+			ErrorMessage: constant.ErrorConstant["DATA_FORMAT_ERROR"].ErrorMessage + " " + "Page number and page size can not be 0",
+		})
+		return
+	}
+
+	limit := requestPayload.Request.PageNumber - 1
+	offset := requestPayload.Request.PageSize * limit
+
+	var expense []model.ListOfExpenses
+
+	var total int64
+
+	h.DB.Preload("Users").Preload("DebitUser").Count(&total)
+
+	h.DB.Preload("Users").Preload("DebitUser").Limit(limit).Offset(offset).Find(&expense)
+
+	c.JSON(http.StatusOK, &payload.Response{
+		Trace:        utils.GetTraceId(c),
+		ErrorCode:    constant.ErrorConstant["SUCCESS"].ErrorCode,
+		ErrorMessage: constant.ErrorConstant["SUCCESS"].ErrorMessage,
+		Response:     expense,
+	})
+}
+
 func SaveNewExpense(db *gorm.DB, model *model.ListOfExpenses, ctx context.Context) *gorm.DB {
 	model.BaseEntity.Active = true
 	model.BaseEntity.CreatedAt = time.Now()

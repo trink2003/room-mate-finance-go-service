@@ -43,9 +43,26 @@ type RemoveExpenseBody struct {
 	Request int64 `json:"request"`
 }
 
+type PageRequestBodyValue struct {
+	PageNumber int `json:"pageNumber"`
+	PageSize   int `json:"pageSize"`
+}
+
+type PageRequestBody struct {
+	Request PageRequestBodyValue `json:"request"`
+}
+
 type Response struct {
 	Trace        string `json:"trace"`
 	ErrorCode    int    `json:"errorCode"`
 	ErrorMessage string `json:"errorMessage"`
+	Response     any    `json:"response"`
+}
+
+type PageResponse struct {
+	Trace        string `json:"trace"`
+	ErrorCode    int    `json:"errorCode"`
+	ErrorMessage string `json:"errorMessage"`
+	TotalElement int64  `json:"totalElement"`
 	Response     any    `json:"response"`
 }
