@@ -35,5 +35,6 @@ func RegisterRoutes(router *gin.Engine, db *gorm.DB) {
 
 	expenseRouter := router.Group("/expense")
 	expenseRouter.POST("/create_new_expense", Authentication, expenseHandler.AddNewExpense)
+	expenseRouter.POST("/get_list_of_expense", Authentication, expenseHandler.ListExpense)
 	expenseRouter.POST("/remove_expense", Authentication, expenseHandler.RemoveExpense)
 }

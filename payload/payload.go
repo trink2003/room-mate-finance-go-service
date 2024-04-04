@@ -64,5 +64,6 @@ type PageResponse struct {
 	ErrorCode    int    `json:"errorCode"`
 	ErrorMessage string `json:"errorMessage"`
 	TotalElement int64  `json:"totalElement"`
+	TotalPage    int64  `json:"totalPage"`
 	Response     any    `json:"response"`
 }

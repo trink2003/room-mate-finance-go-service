@@ -7,7 +7,9 @@ import (
 	"github.com/google/uuid"
 	"golang.org/x/crypto/bcrypt"
 	"log"
+	"math/big"
 	"os"
+	"room-mate-finance-go-service/constant"
 	"strconv"
 	"time"
 )
@@ -119,4 +121,13 @@ func GetCurrentUsername(c *gin.Context) (username *string, err error) {
 	currentUsername := claim["sub"].(string)
 
 	return &currentUsername, nil
+}
+
+func RoundHalfUpBigFloat(input *big.Float) {
+	delta := constant.DELTA_POSITIVE
+
+	if input.Sign() < 0 {
+		delta = constant.DELTA_NEGATIVE
+	}
+	input.Add(input, new(big.Float).SetFloat64(delta))
 }

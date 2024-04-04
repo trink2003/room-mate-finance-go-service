@@ -329,26 +329,49 @@ func (h *ExpenseHandler) ListExpense(c *gin.Context) {
 		c.AbortWithStatusJSON(http.StatusBadRequest, &payload.Response{
 			Trace:        utils.GetTraceId(c),
 			ErrorCode:    constant.ErrorConstant["DATA_FORMAT_ERROR"].ErrorCode,
-			ErrorMessage: constant.ErrorConstant["DATA_FORMAT_ERROR"].ErrorMessage + " " + "Page number and page size can not be 0",
+			ErrorMessage: constant.ErrorConstant["DATA_FORMAT_ERROR"].ErrorMessage + " " + "Page number or page size can not be 0",
 		})
 		return
 	}
 
-	limit := requestPayload.Request.PageNumber - 1
-	offset := requestPayload.Request.PageSize * limit
+	limit := requestPayload.Request.PageSize
+	offset := requestPayload.Request.PageSize * (requestPayload.Request.PageNumber - 1)
 
 	var expense []model.ListOfExpenses
 
-	var total int64
+	var total int64 = 0
 
-	h.DB.Preload("Users").Preload("DebitUser").Count(&total)
+	h.DB.Model(&model.ListOfExpenses{}).Preload("Users").Preload("DebitUser").Count(&total)
 
 	h.DB.Preload("Users").Preload("DebitUser").Limit(limit).Offset(offset).Find(&expense)
 
-	c.JSON(http.StatusOK, &payload.Response{
+	totalRecordsSelected := len(expense)
+
+	if totalRecordsSelected == 0 {
+		c.JSON(http.StatusOK, &payload.PageResponse{
+			Trace:        utils.GetTraceId(c),
+			ErrorCode:    constant.ErrorConstant["SUCCESS"].ErrorCode,
+			ErrorMessage: constant.ErrorConstant["SUCCESS"].ErrorMessage,
+			Response:     expense,
+		})
+		return
+	}
+
+	totalBigNumber := new(big.Float).SetInt64(total)
+	totalRecordsSelectedBigNumber := new(big.Float).SetInt64(int64(totalRecordsSelected))
+
+	totalPage := new(big.Float).Quo(totalRecordsSelectedBigNumber, totalBigNumber)
+
+	utils.RoundHalfUpBigFloat(totalPage)
+
+	totalPageInt, _ := totalPage.Int(nil)
+
+	c.JSON(http.StatusOK, &payload.PageResponse{
 		Trace:        utils.GetTraceId(c),
 		ErrorCode:    constant.ErrorConstant["SUCCESS"].ErrorCode,
 		ErrorMessage: constant.ErrorConstant["SUCCESS"].ErrorMessage,
+		TotalElement: total,
+		TotalPage:    totalPageInt.Int64(),
 		Response:     expense,
 	})
 }
