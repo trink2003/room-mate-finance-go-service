@@ -131,3 +131,7 @@ func RoundHalfUpBigFloat(input *big.Float) {
 	}
 	input.Add(input, new(big.Float).SetFloat64(delta))
 }
+
+func GetPointerOfAnyValue[T any](a T) *T {
+	return &a
+}

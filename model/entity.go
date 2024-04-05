@@ -6,7 +6,7 @@ import (
 
 type BaseEntity struct {
 	Id        int64     `json:"id" gorm:"column:id;primaryKey;"`
-	Active    bool      `json:"active" gorm:"column:active;"`
+	Active    *bool     `json:"active" gorm:"column:active;"`
 	CreatedAt time.Time `json:"createdAt" gorm:"column:created_at;"`
 	UpdatedAt time.Time `json:"updatedAt" gorm:"column:updated_at;"`
 	CreatedBy string    `json:"createdBy" gorm:"column:created_by;"`

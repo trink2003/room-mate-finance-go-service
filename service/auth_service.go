@@ -149,7 +149,7 @@ func (h AuthHandler) Login(ginContext *gin.Context) {
 }
 
 func SaveNewUser(db *gorm.DB, user *model.Users, ctx context2.Context) error {
-	user.BaseEntity.Active = true
+	user.BaseEntity.Active = utils.GetPointerOfAnyValue(true)
 	user.BaseEntity.CreatedAt = time.Now()
 	user.BaseEntity.UpdatedAt = time.Now()
 	user.BaseEntity.CreatedBy = ctx.Value("username").(string)

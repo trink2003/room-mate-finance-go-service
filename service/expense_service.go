@@ -78,7 +78,7 @@ func (h *ExpenseHandler) AddNewExpense(c *gin.Context) {
 	h.DB.Where(
 		&model.Users{
 			BaseEntity: model.BaseEntity{
-				Active: true,
+				Active: utils.GetPointerOfAnyValue(true),
 			},
 			Username: *currentUser,
 		},
@@ -102,7 +102,7 @@ func (h *ExpenseHandler) AddNewExpense(c *gin.Context) {
 				Where(
 					&model.Users{
 						BaseEntity: model.BaseEntity{
-							Active: true,
+							Active: utils.GetPointerOfAnyValue(true),
 						},
 					},
 				).
@@ -121,7 +121,7 @@ func (h *ExpenseHandler) AddNewExpense(c *gin.Context) {
 				Where(
 					&model.Users{
 						BaseEntity: model.BaseEntity{
-							Active: true,
+							Active: utils.GetPointerOfAnyValue(true),
 						},
 					},
 				).
@@ -313,6 +313,109 @@ func (h *ExpenseHandler) RemoveExpense(c *gin.Context) {
 	})
 }
 
+func (h *ExpenseHandler) SoftRemoveExpense(c *gin.Context) {
+
+	currentUser, isCurrentUserExist := utils.GetCurrentUsername(c)
+
+	ctx := context.Background()
+
+	ctx = context.WithValue(ctx, "username", *currentUser)
+
+	if isCurrentUserExist != nil {
+		c.AbortWithStatusJSON(http.StatusBadRequest, &payload.Response{
+			Trace:        utils.GetTraceId(c),
+			ErrorCode:    constant.ErrorConstant["UNAUTHORIZED"].ErrorCode,
+			ErrorMessage: constant.ErrorConstant["UNAUTHORIZED"].ErrorMessage + " " + isCurrentUserExist.Error(),
+		})
+		return
+	}
+
+	requestPayload := payload.RemoveExpenseBody{}
+	if err := c.ShouldBindJSON(&requestPayload); err != nil {
+		c.AbortWithStatusJSON(http.StatusBadRequest, &payload.Response{
+			Trace:        utils.GetTraceId(c),
+			ErrorCode:    constant.ErrorConstant["JSON_BINDING_ERROR"].ErrorCode,
+			ErrorMessage: constant.ErrorConstant["JSON_BINDING_ERROR"].ErrorMessage + " " + err.Error(),
+		})
+		return
+	}
+
+	var errorEnum = constant.ErrorEnums{}
+
+	transactionResult := h.DB.Transaction(func(tx *gorm.DB) error {
+
+		var expense model.ListOfExpenses
+
+		tx.Clauses(clause.Locking{Strength: "UPDATE"}).
+			Preload("Users").Preload("DebitUser").Where(
+			model.ListOfExpenses{
+				BaseEntity: model.BaseEntity{
+					Id:     requestPayload.Request,
+					Active: utils.GetPointerOfAnyValue(true),
+				},
+			},
+		).Find(&expense)
+
+		if expense.BaseEntity.Id == 0 {
+			errorEnum = constant.ErrorConstant["EXPENSE_NOT_SUCCESS"]
+			return nil
+		}
+
+		debitUser := expense.DebitUser
+		for _, du := range debitUser {
+			log.Info(
+				fmt.Sprintf(
+					constant.LogPattern,
+					utils.GetTraceId(c),
+					*currentUser,
+					"changing active status of debit user id "+strconv.FormatInt(du.BaseEntity.Id, 10)+" to false",
+				),
+			)
+			*du.BaseEntity.Active = false
+		}
+		debitUserSoftRemoveResult := tx.Save(&debitUser)
+		if debitUserSoftRemoveResult.Error != nil {
+			return debitUserSoftRemoveResult.Error
+		}
+		*expense.BaseEntity.Active = false
+		log.Info(
+			fmt.Sprintf(
+				constant.LogPattern,
+				utils.GetTraceId(c),
+				*currentUser,
+				"changing active status of expense id "+strconv.FormatInt(expense.BaseEntity.Id, 10)+" to false",
+			),
+		)
+		expenseSoftRemoveResult := tx.Save(&expense)
+		if expenseSoftRemoveResult.Error != nil {
+			return expenseSoftRemoveResult.Error
+		}
+		return nil
+	})
+	if errorEnum.ErrorCode != 0 {
+		c.AbortWithStatusJSON(http.StatusBadRequest, &payload.Response{
+			Trace:        utils.GetTraceId(c),
+			ErrorCode:    errorEnum.ErrorCode,
+			ErrorMessage: errorEnum.ErrorMessage,
+		})
+		return
+	}
+	if transactionResult != nil {
+		c.AbortWithStatusJSON(http.StatusBadRequest, &payload.Response{
+			Trace:        utils.GetTraceId(c),
+			ErrorCode:    constant.ErrorConstant["QUERY_ERROR"].ErrorCode,
+			ErrorMessage: constant.ErrorConstant["QUERY_ERROR"].ErrorMessage + " " + transactionResult.Error(),
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, &payload.Response{
+		Trace:        utils.GetTraceId(c),
+		ErrorCode:    constant.ErrorConstant["SUCCESS"].ErrorCode,
+		ErrorMessage: constant.ErrorConstant["SUCCESS"].ErrorMessage,
+	})
+}
+
 func (h *ExpenseHandler) ListExpense(c *gin.Context) {
 
 	requestPayload := payload.PageRequestBody{}
@@ -377,7 +480,7 @@ func (h *ExpenseHandler) ListExpense(c *gin.Context) {
 }
 
 func SaveNewExpense(db *gorm.DB, model *model.ListOfExpenses, ctx context.Context) *gorm.DB {
-	model.BaseEntity.Active = true
+	model.BaseEntity.Active = utils.GetPointerOfAnyValue(true)
 	model.BaseEntity.CreatedAt = time.Now()
 	model.BaseEntity.UpdatedAt = time.Now()
 	model.BaseEntity.CreatedBy = ctx.Value("username").(string)
@@ -387,7 +490,7 @@ func SaveNewExpense(db *gorm.DB, model *model.ListOfExpenses, ctx context.Contex
 }
 
 func SaveNewDebitUser(db *gorm.DB, model *model.DebitUser, ctx context.Context) *gorm.DB {
-	model.BaseEntity.Active = true
+	model.BaseEntity.Active = utils.GetPointerOfAnyValue(true)
 	model.BaseEntity.CreatedAt = time.Now()
 	model.BaseEntity.UpdatedAt = time.Now()
 	model.BaseEntity.CreatedBy = ctx.Value("username").(string)
