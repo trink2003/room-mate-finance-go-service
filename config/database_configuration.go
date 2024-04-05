@@ -78,9 +78,19 @@ func InitDatabaseConnection() (db *gorm.DB, err error) {
 	// SetConnMaxLifetime sets the maximum amount of time a connection may be reused.
 	sqlDB.SetConnMaxLifetime(time.Hour)
 
-	// migrateErr := db.AutoMigrate(&model.User{})
-	// if migrateErr != nil {
-	// 	return nil, migrateErr
+	// usersMigrateErr := db.AutoMigrate(&model.Users{})
+	// if usersMigrateErr != nil {
+	// 	return nil, usersMigrateErr
+	// }
+
+	// debitUserMigrateErr := db.AutoMigrate(&model.DebitUser{})
+	// if debitUserMigrateErr != nil {
+	// 	return nil, debitUserMigrateErr
+	// }
+
+	// listOfExpensesMigrateErr := db.AutoMigrate(&model.ListOfExpenses{})
+	// if listOfExpensesMigrateErr != nil {
+	// 	return nil, listOfExpensesMigrateErr
 	// }
 	return db, err
 }
