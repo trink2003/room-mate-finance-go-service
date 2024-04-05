@@ -5,8 +5,8 @@ type ErrorEnums struct {
 	ErrorMessage string
 }
 
-const DELTA_POSITIVE = 0.5
-const DELTA_NEGATIVE = -0.5
+const DeltaPositive = 0.5
+const DeltaNegative = -0.5
 
 const LogPattern = "[%s] [%s] ⮞⮞ %s"
 

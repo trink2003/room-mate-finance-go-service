@@ -125,10 +125,10 @@ func GetCurrentUsername(c *gin.Context) (username *string, err error) {
 }
 
 func RoundHalfUpBigFloat(input *big.Float) {
-	delta := constant.DELTA_POSITIVE
+	delta := constant.DeltaPositive
 
 	if input.Sign() < 0 {
-		delta = constant.DELTA_NEGATIVE
+		delta = constant.DeltaNegative
 	}
 	input.Add(input, new(big.Float).SetFloat64(delta))
 }
