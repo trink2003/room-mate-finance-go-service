@@ -19,6 +19,14 @@ var ErrorConstant = map[string]ErrorEnums{
 		ErrorCode:    -1,
 		ErrorMessage: "An error has been occurred, please try again later.",
 	},
+	"PAGE_NOT_FOUND": {
+		ErrorCode:    -2,
+		ErrorMessage: "You're consuming an unknow endpoint, please check your url (404 Page Not Found).",
+	},
+	"METHOD_NOT_ALLOWED": {
+		ErrorCode:    -3,
+		ErrorMessage: "This url is configured method that not match with your current method, please check again (405 Method Not Allowed).",
+	},
 	"QUERY_ERROR": {
 		ErrorCode:    1,
 		ErrorMessage: "Query error.",
