@@ -280,8 +280,8 @@ func (h *ExpenseHandler) RemoveExpense(c *gin.Context) {
 	if expense.BaseEntity.Id == 0 {
 		c.AbortWithStatusJSON(http.StatusBadRequest, &payload.Response{
 			Trace:        utils.GetTraceId(c),
-			ErrorCode:    constant.ErrorConstant["EXPENSE_NOT_SUCCESS"].ErrorCode,
-			ErrorMessage: constant.ErrorConstant["EXPENSE_NOT_SUCCESS"].ErrorMessage,
+			ErrorCode:    constant.ErrorConstant["EXPENSE_DELETE_NOT_SUCCESS"].ErrorCode,
+			ErrorMessage: constant.ErrorConstant["EXPENSE_DELETE_NOT_SUCCESS"].ErrorMessage,
 		})
 		return
 	}
@@ -357,7 +357,7 @@ func (h *ExpenseHandler) SoftRemoveExpense(c *gin.Context) {
 		).Find(&expense)
 
 		if expense.BaseEntity.Id == 0 {
-			errorEnum = constant.ErrorConstant["EXPENSE_NOT_SUCCESS"]
+			errorEnum = constant.ErrorConstant["EXPENSE_DELETE_NOT_SUCCESS"]
 			return nil
 		}
 
@@ -378,6 +378,109 @@ func (h *ExpenseHandler) SoftRemoveExpense(c *gin.Context) {
 			return debitUserSoftRemoveResult.Error
 		}
 		*expense.BaseEntity.Active = false
+		log.Info(
+			fmt.Sprintf(
+				constant.LogPattern,
+				utils.GetTraceId(c),
+				*currentUser,
+				"changing active status of expense id "+strconv.FormatInt(expense.BaseEntity.Id, 10)+" to false",
+			),
+		)
+		expenseSoftRemoveResult := tx.Save(&expense)
+		if expenseSoftRemoveResult.Error != nil {
+			return expenseSoftRemoveResult.Error
+		}
+		return nil
+	})
+	if errorEnum.ErrorCode != 0 {
+		c.AbortWithStatusJSON(http.StatusBadRequest, &payload.Response{
+			Trace:        utils.GetTraceId(c),
+			ErrorCode:    errorEnum.ErrorCode,
+			ErrorMessage: errorEnum.ErrorMessage,
+		})
+		return
+	}
+	if transactionResult != nil {
+		c.AbortWithStatusJSON(http.StatusBadRequest, &payload.Response{
+			Trace:        utils.GetTraceId(c),
+			ErrorCode:    constant.ErrorConstant["QUERY_ERROR"].ErrorCode,
+			ErrorMessage: constant.ErrorConstant["QUERY_ERROR"].ErrorMessage + " " + transactionResult.Error(),
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, &payload.Response{
+		Trace:        utils.GetTraceId(c),
+		ErrorCode:    constant.ErrorConstant["SUCCESS"].ErrorCode,
+		ErrorMessage: constant.ErrorConstant["SUCCESS"].ErrorMessage,
+	})
+}
+
+func (h *ExpenseHandler) ActiveRemoveExpense(c *gin.Context) {
+
+	currentUser, isCurrentUserExist := utils.GetCurrentUsername(c)
+
+	ctx := context.Background()
+
+	ctx = context.WithValue(ctx, "username", *currentUser)
+
+	if isCurrentUserExist != nil {
+		c.AbortWithStatusJSON(http.StatusBadRequest, &payload.Response{
+			Trace:        utils.GetTraceId(c),
+			ErrorCode:    constant.ErrorConstant["UNAUTHORIZED"].ErrorCode,
+			ErrorMessage: constant.ErrorConstant["UNAUTHORIZED"].ErrorMessage + " " + isCurrentUserExist.Error(),
+		})
+		return
+	}
+
+	requestPayload := payload.RemoveExpenseBody{}
+	if err := c.ShouldBindJSON(&requestPayload); err != nil {
+		c.AbortWithStatusJSON(http.StatusBadRequest, &payload.Response{
+			Trace:        utils.GetTraceId(c),
+			ErrorCode:    constant.ErrorConstant["JSON_BINDING_ERROR"].ErrorCode,
+			ErrorMessage: constant.ErrorConstant["JSON_BINDING_ERROR"].ErrorMessage + " " + err.Error(),
+		})
+		return
+	}
+
+	var errorEnum = constant.ErrorEnums{}
+
+	transactionResult := h.DB.Transaction(func(tx *gorm.DB) error {
+
+		var expense model.ListOfExpenses
+
+		tx.Clauses(clause.Locking{Strength: "UPDATE"}).
+			Preload("Users").Preload("DebitUser").Where(
+			model.ListOfExpenses{
+				BaseEntity: model.BaseEntity{
+					Id:     requestPayload.Request,
+					Active: utils.GetPointerOfAnyValue(false),
+				},
+			},
+		).Find(&expense)
+
+		if expense.BaseEntity.Id == 0 {
+			errorEnum = constant.ErrorConstant["EXPENSE_ACTIVE_NOT_SUCCESS"]
+			return nil
+		}
+
+		debitUser := expense.DebitUser
+		for _, du := range debitUser {
+			log.Info(
+				fmt.Sprintf(
+					constant.LogPattern,
+					utils.GetTraceId(c),
+					*currentUser,
+					"changing active status of debit user id "+strconv.FormatInt(du.BaseEntity.Id, 10)+" to false",
+				),
+			)
+			*du.BaseEntity.Active = true
+		}
+		debitUserSoftRemoveResult := tx.Save(&debitUser)
+		if debitUserSoftRemoveResult.Error != nil {
+			return debitUserSoftRemoveResult.Error
+		}
+		*expense.BaseEntity.Active = true
 		log.Info(
 			fmt.Sprintf(
 				constant.LogPattern,

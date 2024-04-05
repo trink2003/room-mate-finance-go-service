@@ -63,8 +63,12 @@ var ErrorConstant = map[string]ErrorEnums{
 		ErrorCode:    9,
 		ErrorMessage: "The buyer must not be on the list of payers.",
 	},
-	"EXPENSE_NOT_SUCCESS": {
+	"EXPENSE_DELETE_NOT_SUCCESS": {
 		ErrorCode:    10,
 		ErrorMessage: "An error occurred while deleting daily spending data.",
+	},
+	"EXPENSE_ACTIVE_NOT_SUCCESS": {
+		ErrorCode:    10,
+		ErrorMessage: "An error occurred while activating daily spending data.",
 	},
 }

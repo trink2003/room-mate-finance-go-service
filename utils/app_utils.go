@@ -1,6 +1,7 @@
 package utils
 
 import (
+	"encoding/json"
 	"errors"
 	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt/v5"
@@ -134,4 +135,19 @@ func RoundHalfUpBigFloat(input *big.Float) {
 
 func GetPointerOfAnyValue[T any](a T) *T {
 	return &a
+}
+
+func StructToJson(anyStruct any) string {
+	result, err := json.Marshal(anyStruct)
+	if err != nil {
+		return ""
+	}
+	return string(result)
+}
+
+func JsonToStruct[T any](jsonString string, anyStruct *T) {
+	err := json.Unmarshal([]byte(jsonString), anyStruct)
+	if err != nil {
+		return
+	}
 }
