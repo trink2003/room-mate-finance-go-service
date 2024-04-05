@@ -471,7 +471,7 @@ func (h *ExpenseHandler) ActiveRemoveExpense(c *gin.Context) {
 					constant.LogPattern,
 					utils.GetTraceId(c),
 					*currentUser,
-					"changing active status of debit user id "+strconv.FormatInt(du.BaseEntity.Id, 10)+" to false",
+					"changing active status of debit user id "+strconv.FormatInt(du.BaseEntity.Id, 10)+" to true",
 				),
 			)
 			*du.BaseEntity.Active = true
@@ -486,7 +486,7 @@ func (h *ExpenseHandler) ActiveRemoveExpense(c *gin.Context) {
 				constant.LogPattern,
 				utils.GetTraceId(c),
 				*currentUser,
-				"changing active status of expense id "+strconv.FormatInt(expense.BaseEntity.Id, 10)+" to false",
+				"changing active status of expense id "+strconv.FormatInt(expense.BaseEntity.Id, 10)+" to true",
 			),
 		)
 		expenseSoftRemoveResult := tx.Save(&expense)
