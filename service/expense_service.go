@@ -23,38 +23,54 @@ func (h *ExpenseHandler) AddNewExpense(c *gin.Context) {
 	requestPayload := payload.ExpenseRequestBody{}
 
 	if err := c.ShouldBindJSON(&requestPayload); err != nil {
-		c.AbortWithStatusJSON(http.StatusBadRequest, &payload.Response{
-			Trace:        utils.GetTraceId(c),
-			ErrorCode:    constant.ErrorConstant["JSON_BINDING_ERROR"].ErrorCode,
-			ErrorMessage: constant.ErrorConstant["JSON_BINDING_ERROR"].ErrorMessage + " " + err.Error(),
-		})
+		c.AbortWithStatusJSON(
+			http.StatusBadRequest,
+			ReturnResponse(
+				c,
+				constant.ErrorConstant["JSON_BINDING_ERROR"],
+				nil,
+				err.Error(),
+			),
+		)
 		return
 	}
 
 	if requestPayload.Request.Amount <= 0 {
-		c.AbortWithStatusJSON(http.StatusBadRequest, &payload.Response{
-			Trace:        utils.GetTraceId(c),
-			ErrorCode:    constant.ErrorConstant["DATA_FORMAT_ERROR"].ErrorCode,
-			ErrorMessage: constant.ErrorConstant["DATA_FORMAT_ERROR"].ErrorMessage + " Amount need to be equal or greater than 0",
-		})
+		c.AbortWithStatusJSON(
+			http.StatusBadRequest,
+			ReturnResponse(
+				c,
+				constant.ErrorConstant["DATA_FORMAT_ERROR"],
+				nil,
+				"Amount need to be equal or greater than 0",
+			),
+		)
 		return
 	}
 
 	if len(requestPayload.Request.UserToPaid) == 0 {
-		c.AbortWithStatusJSON(http.StatusBadRequest, &payload.Response{
-			Trace:        utils.GetTraceId(c),
-			ErrorCode:    constant.ErrorConstant["DATA_FORMAT_ERROR"].ErrorCode,
-			ErrorMessage: constant.ErrorConstant["DATA_FORMAT_ERROR"].ErrorMessage + " List of user need to pay must be not empty",
-		})
+		c.AbortWithStatusJSON(
+			http.StatusBadRequest,
+			ReturnResponse(
+				c,
+				constant.ErrorConstant["DATA_FORMAT_ERROR"],
+				nil,
+				"List of user need to pay must be not empty",
+			),
+		)
 		return
 	}
 
 	if requestPayload.Request.Purpose == "" {
-		c.AbortWithStatusJSON(http.StatusBadRequest, &payload.Response{
-			Trace:        utils.GetTraceId(c),
-			ErrorCode:    constant.ErrorConstant["DATA_FORMAT_ERROR"].ErrorCode,
-			ErrorMessage: constant.ErrorConstant["DATA_FORMAT_ERROR"].ErrorMessage + " What is your purpose of this expense?",
-		})
+		c.AbortWithStatusJSON(
+			http.StatusBadRequest,
+			ReturnResponse(
+				c,
+				constant.ErrorConstant["DATA_FORMAT_ERROR"],
+				nil,
+				"What is your purpose of this expense?",
+			),
+		)
 		return
 	}
 
@@ -65,11 +81,15 @@ func (h *ExpenseHandler) AddNewExpense(c *gin.Context) {
 	ctx = context.WithValue(ctx, "username", *currentUser)
 
 	if isCurrentUserExist != nil {
-		c.AbortWithStatusJSON(http.StatusBadRequest, &payload.Response{
-			Trace:        utils.GetTraceId(c),
-			ErrorCode:    constant.ErrorConstant["UNAUTHORIZED"].ErrorCode,
-			ErrorMessage: constant.ErrorConstant["UNAUTHORIZED"].ErrorMessage + " " + isCurrentUserExist.Error(),
-		})
+		c.AbortWithStatusJSON(
+			http.StatusUnauthorized,
+			ReturnResponse(
+				c,
+				constant.ErrorConstant["UNAUTHORIZED"],
+				nil,
+				isCurrentUserExist.Error(),
+			),
+		)
 		return
 	}
 
@@ -85,11 +105,15 @@ func (h *ExpenseHandler) AddNewExpense(c *gin.Context) {
 	).Find(&boughtUser)
 
 	if boughtUser.BaseEntity.Id == 0 {
-		c.AbortWithStatusJSON(http.StatusBadRequest, &payload.Response{
-			Trace:        utils.GetTraceId(c),
-			ErrorCode:    constant.ErrorConstant["USER_NOT_EXISTED"].ErrorCode,
-			ErrorMessage: constant.ErrorConstant["USER_NOT_EXISTED"].ErrorMessage + " Who are you?",
-		})
+		c.AbortWithStatusJSON(
+			http.StatusNotFound,
+			ReturnResponse(
+				c,
+				constant.ErrorConstant["USER_NOT_EXISTED"],
+				nil,
+				"Who are you?",
+			),
+		)
 		return
 	}
 
@@ -133,20 +157,26 @@ func (h *ExpenseHandler) AddNewExpense(c *gin.Context) {
 		Find(&allActiveUserInList)
 
 	if numberOfActiveUser < 2 || len(allActiveUserInList) < len(requestPayload.Request.UserToPaid) {
-		c.AbortWithStatusJSON(http.StatusBadRequest, &payload.Response{
-			Trace:        utils.GetTraceId(c),
-			ErrorCode:    constant.ErrorConstant["INVALID_NUMBER_OF_USER"].ErrorCode,
-			ErrorMessage: constant.ErrorConstant["INVALID_NUMBER_OF_USER"].ErrorMessage,
-		})
+		c.AbortWithStatusJSON(
+			http.StatusBadRequest,
+			ReturnResponse(
+				c,
+				constant.ErrorConstant["INVALID_NUMBER_OF_USER"],
+				nil,
+			),
+		)
 		return
 	}
 
 	if slices.Contains(requestPayload.Request.UserToPaid, boughtUser.BaseEntity.Id) {
-		c.AbortWithStatusJSON(http.StatusBadRequest, &payload.Response{
-			Trace:        utils.GetTraceId(c),
-			ErrorCode:    constant.ErrorConstant["INVALID_USER_TO_PAID_LIST"].ErrorCode,
-			ErrorMessage: constant.ErrorConstant["INVALID_USER_TO_PAID_LIST"].ErrorMessage,
-		})
+		c.AbortWithStatusJSON(
+			http.StatusBadRequest,
+			ReturnResponse(
+				c,
+				constant.ErrorConstant["INVALID_USER_TO_PAID_LIST"],
+				nil,
+			),
+		)
 		return
 	}
 	log.Info(
@@ -228,11 +258,15 @@ func (h *ExpenseHandler) AddNewExpense(c *gin.Context) {
 		},
 	)
 	if expenseTransactionError != nil {
-		c.AbortWithStatusJSON(http.StatusBadRequest, &payload.Response{
-			Trace:        utils.GetTraceId(c),
-			ErrorCode:    constant.ErrorConstant["QUERY_ERROR"].ErrorCode,
-			ErrorMessage: constant.ErrorConstant["QUERY_ERROR"].ErrorMessage + " " + expenseTransactionError.Error(),
-		})
+		c.AbortWithStatusJSON(
+			http.StatusBadRequest,
+			ReturnResponse(
+				c,
+				constant.ErrorConstant["QUERY_ERROR"],
+				nil,
+				expenseTransactionError.Error(),
+			),
+		)
 		return
 	}
 
@@ -246,12 +280,14 @@ func (h *ExpenseHandler) AddNewExpense(c *gin.Context) {
 		},
 	).Find(&savedExpense)
 
-	c.JSON(http.StatusOK, &payload.Response{
-		Trace:        utils.GetTraceId(c),
-		ErrorCode:    constant.ErrorConstant["SUCCESS"].ErrorCode,
-		ErrorMessage: constant.ErrorConstant["SUCCESS"].ErrorMessage,
-		Response:     savedExpense,
-	})
+	c.JSON(
+		http.StatusOK,
+		ReturnResponse(
+			c,
+			constant.ErrorConstant["SUCCESS"],
+			savedExpense,
+		),
+	)
 
 }
 
@@ -259,11 +295,15 @@ func (h *ExpenseHandler) RemoveExpense(c *gin.Context) {
 
 	requestPayload := payload.RemoveExpenseBody{}
 	if err := c.ShouldBindJSON(&requestPayload); err != nil {
-		c.AbortWithStatusJSON(http.StatusBadRequest, &payload.Response{
-			Trace:        utils.GetTraceId(c),
-			ErrorCode:    constant.ErrorConstant["JSON_BINDING_ERROR"].ErrorCode,
-			ErrorMessage: constant.ErrorConstant["JSON_BINDING_ERROR"].ErrorMessage + " " + err.Error(),
-		})
+		c.AbortWithStatusJSON(
+			http.StatusBadRequest,
+			ReturnResponse(
+				c,
+				constant.ErrorConstant["JSON_BINDING_ERROR"],
+				nil,
+				err.Error(),
+			),
+		)
 		return
 	}
 
@@ -278,11 +318,14 @@ func (h *ExpenseHandler) RemoveExpense(c *gin.Context) {
 	).Find(&expense)
 
 	if expense.BaseEntity.Id == 0 {
-		c.AbortWithStatusJSON(http.StatusBadRequest, &payload.Response{
-			Trace:        utils.GetTraceId(c),
-			ErrorCode:    constant.ErrorConstant["EXPENSE_DELETE_NOT_SUCCESS"].ErrorCode,
-			ErrorMessage: constant.ErrorConstant["EXPENSE_DELETE_NOT_SUCCESS"].ErrorMessage,
-		})
+		c.AbortWithStatusJSON(
+			http.StatusBadRequest,
+			ReturnResponse(
+				c,
+				constant.ErrorConstant["EXPENSE_DELETE_NOT_SUCCESS"],
+				nil,
+			),
+		)
 		return
 	}
 
@@ -298,19 +341,26 @@ func (h *ExpenseHandler) RemoveExpense(c *gin.Context) {
 		return nil
 	})
 	if transactionResult != nil {
-		c.AbortWithStatusJSON(http.StatusBadRequest, &payload.Response{
-			Trace:        utils.GetTraceId(c),
-			ErrorCode:    constant.ErrorConstant["QUERY_ERROR"].ErrorCode,
-			ErrorMessage: constant.ErrorConstant["QUERY_ERROR"].ErrorMessage + " " + transactionResult.Error(),
-		})
+		c.AbortWithStatusJSON(
+			http.StatusBadRequest,
+			ReturnResponse(
+				c,
+				constant.ErrorConstant["QUERY_ERROR"],
+				nil,
+				transactionResult.Error(),
+			),
+		)
 		return
 	}
 
-	c.JSON(http.StatusOK, &payload.Response{
-		Trace:        utils.GetTraceId(c),
-		ErrorCode:    constant.ErrorConstant["SUCCESS"].ErrorCode,
-		ErrorMessage: constant.ErrorConstant["SUCCESS"].ErrorMessage,
-	})
+	c.JSON(
+		http.StatusOK,
+		ReturnResponse(
+			c,
+			constant.ErrorConstant["SUCCESS"],
+			nil,
+		),
+	)
 }
 
 func (h *ExpenseHandler) SoftRemoveExpense(c *gin.Context) {
@@ -322,21 +372,29 @@ func (h *ExpenseHandler) SoftRemoveExpense(c *gin.Context) {
 	ctx = context.WithValue(ctx, "username", *currentUser)
 
 	if isCurrentUserExist != nil {
-		c.AbortWithStatusJSON(http.StatusBadRequest, &payload.Response{
-			Trace:        utils.GetTraceId(c),
-			ErrorCode:    constant.ErrorConstant["UNAUTHORIZED"].ErrorCode,
-			ErrorMessage: constant.ErrorConstant["UNAUTHORIZED"].ErrorMessage + " " + isCurrentUserExist.Error(),
-		})
+		c.AbortWithStatusJSON(
+			http.StatusUnauthorized,
+			ReturnResponse(
+				c,
+				constant.ErrorConstant["UNAUTHORIZED"],
+				nil,
+				isCurrentUserExist.Error(),
+			),
+		)
 		return
 	}
 
 	requestPayload := payload.RemoveExpenseBody{}
 	if err := c.ShouldBindJSON(&requestPayload); err != nil {
-		c.AbortWithStatusJSON(http.StatusBadRequest, &payload.Response{
-			Trace:        utils.GetTraceId(c),
-			ErrorCode:    constant.ErrorConstant["JSON_BINDING_ERROR"].ErrorCode,
-			ErrorMessage: constant.ErrorConstant["JSON_BINDING_ERROR"].ErrorMessage + " " + err.Error(),
-		})
+		c.AbortWithStatusJSON(
+			http.StatusBadRequest,
+			ReturnResponse(
+				c,
+				constant.ErrorConstant["JSON_BINDING_ERROR"],
+				nil,
+				err.Error(),
+			),
+		)
 		return
 	}
 
@@ -393,27 +451,37 @@ func (h *ExpenseHandler) SoftRemoveExpense(c *gin.Context) {
 		return nil
 	})
 	if errorEnum.ErrorCode != 0 {
-		c.AbortWithStatusJSON(http.StatusBadRequest, &payload.Response{
-			Trace:        utils.GetTraceId(c),
-			ErrorCode:    errorEnum.ErrorCode,
-			ErrorMessage: errorEnum.ErrorMessage,
-		})
+		c.AbortWithStatusJSON(
+			http.StatusBadRequest,
+			ReturnResponse(
+				c,
+				errorEnum,
+				nil,
+			),
+		)
 		return
 	}
 	if transactionResult != nil {
-		c.AbortWithStatusJSON(http.StatusBadRequest, &payload.Response{
-			Trace:        utils.GetTraceId(c),
-			ErrorCode:    constant.ErrorConstant["QUERY_ERROR"].ErrorCode,
-			ErrorMessage: constant.ErrorConstant["QUERY_ERROR"].ErrorMessage + " " + transactionResult.Error(),
-		})
+		c.AbortWithStatusJSON(
+			http.StatusInternalServerError,
+			ReturnResponse(
+				c,
+				constant.ErrorConstant["QUERY_ERROR"],
+				nil,
+				transactionResult.Error(),
+			),
+		)
 		return
 	}
 
-	c.JSON(http.StatusOK, &payload.Response{
-		Trace:        utils.GetTraceId(c),
-		ErrorCode:    constant.ErrorConstant["SUCCESS"].ErrorCode,
-		ErrorMessage: constant.ErrorConstant["SUCCESS"].ErrorMessage,
-	})
+	c.JSON(
+		http.StatusOK,
+		ReturnResponse(
+			c,
+			constant.ErrorConstant["SUCCESS"],
+			nil,
+		),
+	)
 }
 
 func (h *ExpenseHandler) ActiveRemoveExpense(c *gin.Context) {
@@ -425,21 +493,29 @@ func (h *ExpenseHandler) ActiveRemoveExpense(c *gin.Context) {
 	ctx = context.WithValue(ctx, "username", *currentUser)
 
 	if isCurrentUserExist != nil {
-		c.AbortWithStatusJSON(http.StatusBadRequest, &payload.Response{
-			Trace:        utils.GetTraceId(c),
-			ErrorCode:    constant.ErrorConstant["UNAUTHORIZED"].ErrorCode,
-			ErrorMessage: constant.ErrorConstant["UNAUTHORIZED"].ErrorMessage + " " + isCurrentUserExist.Error(),
-		})
+		c.AbortWithStatusJSON(
+			http.StatusUnauthorized,
+			ReturnResponse(
+				c,
+				constant.ErrorConstant["UNAUTHORIZED"],
+				nil,
+				isCurrentUserExist.Error(),
+			),
+		)
 		return
 	}
 
 	requestPayload := payload.RemoveExpenseBody{}
 	if err := c.ShouldBindJSON(&requestPayload); err != nil {
-		c.AbortWithStatusJSON(http.StatusBadRequest, &payload.Response{
-			Trace:        utils.GetTraceId(c),
-			ErrorCode:    constant.ErrorConstant["JSON_BINDING_ERROR"].ErrorCode,
-			ErrorMessage: constant.ErrorConstant["JSON_BINDING_ERROR"].ErrorMessage + " " + err.Error(),
-		})
+		c.AbortWithStatusJSON(
+			http.StatusBadRequest,
+			ReturnResponse(
+				c,
+				constant.ErrorConstant["JSON_BINDING_ERROR"],
+				nil,
+				err.Error(),
+			),
+		)
 		return
 	}
 
@@ -496,47 +572,65 @@ func (h *ExpenseHandler) ActiveRemoveExpense(c *gin.Context) {
 		return nil
 	})
 	if errorEnum.ErrorCode != 0 {
-		c.AbortWithStatusJSON(http.StatusBadRequest, &payload.Response{
-			Trace:        utils.GetTraceId(c),
-			ErrorCode:    errorEnum.ErrorCode,
-			ErrorMessage: errorEnum.ErrorMessage,
-		})
+		c.AbortWithStatusJSON(
+			http.StatusBadRequest,
+			ReturnResponse(
+				c,
+				errorEnum,
+				nil,
+			),
+		)
 		return
 	}
 	if transactionResult != nil {
-		c.AbortWithStatusJSON(http.StatusBadRequest, &payload.Response{
-			Trace:        utils.GetTraceId(c),
-			ErrorCode:    constant.ErrorConstant["QUERY_ERROR"].ErrorCode,
-			ErrorMessage: constant.ErrorConstant["QUERY_ERROR"].ErrorMessage + " " + transactionResult.Error(),
-		})
+		c.AbortWithStatusJSON(
+			http.StatusInternalServerError,
+			ReturnResponse(
+				c,
+				constant.ErrorConstant["QUERY_ERROR"],
+				nil,
+				transactionResult.Error(),
+			),
+		)
 		return
 	}
 
-	c.JSON(http.StatusOK, &payload.Response{
-		Trace:        utils.GetTraceId(c),
-		ErrorCode:    constant.ErrorConstant["SUCCESS"].ErrorCode,
-		ErrorMessage: constant.ErrorConstant["SUCCESS"].ErrorMessage,
-	})
+	c.JSON(
+		http.StatusOK,
+		ReturnResponse(
+			c,
+			constant.ErrorConstant["SUCCESS"],
+			nil,
+		),
+	)
 }
 
 func (h *ExpenseHandler) ListExpense(c *gin.Context) {
 
 	requestPayload := payload.PageRequestBody{}
 	if err := c.ShouldBindJSON(&requestPayload); err != nil {
-		c.AbortWithStatusJSON(http.StatusBadRequest, &payload.Response{
-			Trace:        utils.GetTraceId(c),
-			ErrorCode:    constant.ErrorConstant["JSON_BINDING_ERROR"].ErrorCode,
-			ErrorMessage: constant.ErrorConstant["JSON_BINDING_ERROR"].ErrorMessage + " " + err.Error(),
-		})
+		c.AbortWithStatusJSON(
+			http.StatusBadRequest,
+			ReturnResponse(
+				c,
+				constant.ErrorConstant["JSON_BINDING_ERROR"],
+				nil,
+				err.Error(),
+			),
+		)
 		return
 	}
 
 	if requestPayload.Request.PageSize == 0 || requestPayload.Request.PageNumber == 0 {
-		c.AbortWithStatusJSON(http.StatusBadRequest, &payload.Response{
-			Trace:        utils.GetTraceId(c),
-			ErrorCode:    constant.ErrorConstant["DATA_FORMAT_ERROR"].ErrorCode,
-			ErrorMessage: constant.ErrorConstant["DATA_FORMAT_ERROR"].ErrorMessage + " " + "Page number or page size can not be 0",
-		})
+		c.AbortWithStatusJSON(
+			http.StatusBadRequest,
+			ReturnResponse(
+				c,
+				constant.ErrorConstant["DATA_FORMAT_ERROR"],
+				nil,
+				"Page number or page size can not be 0",
+			),
+		)
 		return
 	}
 
@@ -547,19 +641,39 @@ func (h *ExpenseHandler) ListExpense(c *gin.Context) {
 
 	var total int64 = 0
 
-	h.DB.Model(&model.ListOfExpenses{}).Preload("Users").Preload("DebitUser").Count(&total)
+	h.DB.Model(&model.ListOfExpenses{}).Preload("Users").Preload("DebitUser").
+		Where(
+			model.ListOfExpenses{
+				BaseEntity: model.BaseEntity{
+					Active: utils.GetPointerOfAnyValue(true),
+				},
+			},
+		).
+		Count(&total)
 
-	h.DB.Preload("Users").Preload("DebitUser").Limit(limit).Offset(offset).Find(&expense)
+	h.DB.Preload("Users").Preload("DebitUser").Limit(limit).Offset(offset).
+		Where(
+			model.ListOfExpenses{
+				BaseEntity: model.BaseEntity{
+					Active: utils.GetPointerOfAnyValue(true),
+				},
+			},
+		).
+		Find(&expense)
 
 	totalRecordsSelected := len(expense)
 
 	if totalRecordsSelected == 0 {
-		c.JSON(http.StatusOK, &payload.PageResponse{
-			Trace:        utils.GetTraceId(c),
-			ErrorCode:    constant.ErrorConstant["SUCCESS"].ErrorCode,
-			ErrorMessage: constant.ErrorConstant["SUCCESS"].ErrorMessage,
-			Response:     expense,
-		})
+		c.JSON(
+			http.StatusOK,
+			ReturnPageResponse(
+				c,
+				constant.ErrorConstant["SUCCESS"],
+				0,
+				0,
+				expense,
+			),
+		)
 		return
 	}
 
@@ -572,14 +686,16 @@ func (h *ExpenseHandler) ListExpense(c *gin.Context) {
 
 	totalPageInt, _ := totalPage.Int(nil)
 
-	c.JSON(http.StatusOK, &payload.PageResponse{
-		Trace:        utils.GetTraceId(c),
-		ErrorCode:    constant.ErrorConstant["SUCCESS"].ErrorCode,
-		ErrorMessage: constant.ErrorConstant["SUCCESS"].ErrorMessage,
-		TotalElement: total,
-		TotalPage:    totalPageInt.Int64(),
-		Response:     expense,
-	})
+	c.JSON(
+		http.StatusOK,
+		ReturnPageResponse(
+			c,
+			constant.ErrorConstant["SUCCESS"],
+			total,
+			totalPageInt.Int64(),
+			expense,
+		),
+	)
 }
 
 func SaveNewExpense(db *gorm.DB, model *model.ListOfExpenses, ctx context.Context) *gorm.DB {

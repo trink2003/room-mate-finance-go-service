@@ -127,3 +127,40 @@ func Authentication(c *gin.Context) {
 	c.Set("auth", mapClaims)
 	c.Next()
 }
+
+func ReturnResponse(c *gin.Context, errCode constant.ErrorEnums, responseData any, additionalMessage ...string) *payload.Response {
+	message := ""
+	if len(additionalMessage) > 0 {
+		message = additionalMessage[0]
+	}
+
+	return &payload.Response{
+		Trace:        utils.GetTraceId(c),
+		ErrorCode:    errCode.ErrorCode,
+		ErrorMessage: strings.Trim(errCode.ErrorMessage, " ") + ". " + strings.Trim(message, " "),
+		Response:     responseData,
+	}
+}
+
+func ReturnPageResponse(
+	c *gin.Context,
+	errCode constant.ErrorEnums,
+	totalElement int64,
+	totalPage int64,
+	responseData any,
+	additionalMessage ...string,
+) *payload.PageResponse {
+	message := ""
+	if len(additionalMessage) > 0 {
+		message = additionalMessage[0]
+	}
+
+	return &payload.PageResponse{
+		Trace:        utils.GetTraceId(c),
+		ErrorCode:    errCode.ErrorCode,
+		ErrorMessage: strings.Trim(errCode.ErrorMessage, " ") + ". " + strings.Trim(message, " "),
+		TotalElement: totalElement,
+		TotalPage:    totalPage,
+		Response:     responseData,
+	}
+}

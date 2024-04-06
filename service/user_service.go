@@ -21,11 +21,12 @@ func (h UserHandler) GetUsers(ginContext *gin.Context) {
 		})
 		return
 	}
-
-	ginContext.JSON(http.StatusOK, &payload.Response{
-		Trace:        utils.GetTraceId(ginContext),
-		ErrorCode:    constant.ErrorConstant["SUCCESS"].ErrorCode,
-		ErrorMessage: constant.ErrorConstant["SUCCESS"].ErrorMessage,
-		Response:     user,
-	})
+	ginContext.JSON(
+		http.StatusOK,
+		ReturnResponse(
+			ginContext,
+			constant.ErrorConstant["SUCCESS"],
+			user,
+		),
+	)
 }
