@@ -1,0 +1,15 @@
+services:
+  room-mate-finance-go-service:
+    container_name: room-mate-finance-service
+    environment:
+      - DATABASE_USERNAME=postgres
+      - DATABASE_PASSWORD=postgres
+      - DATABASE_HOST=192.168.56.1
+      - DATABASE_PORT=5432
+      - DATABASE_NAME=room-mate-finance
+      - GIN_MODE=release
+    ports:
+      - "8080:8080"
+    build:
+      context: .
+      dockerfile: ./Dockerfile

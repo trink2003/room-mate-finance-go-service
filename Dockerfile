@@ -16,3 +16,15 @@ ENV LANGUAGE en_US:en
 
 RUN apt update && apt upgrade -y
 RUN apt install telnet -y && apt install curl -y && apt install vim -y && apt install nano -y
+
+# You can stop at this line if you just want to build a pre-built image
+
+WORKDIR /app
+
+ADD . .
+
+RUN go mod download
+
+RUN CGO_ENABLED=0 GOOS=linux go build -o /go-app
+
+CMD ["/go-app"]
