@@ -44,8 +44,9 @@ type RemoveExpenseBody struct {
 }
 
 type PageRequestBodyValue struct {
-	PageNumber int `json:"pageNumber"`
-	PageSize   int `json:"pageSize"`
+	PageNumber int               `json:"pageNumber"`
+	PageSize   int               `json:"pageSize"`
+	Sort       map[string]string `json:"sort"`
 }
 
 type PageRequestBody struct {

@@ -652,6 +652,7 @@ func (h *ExpenseHandler) ListExpense(c *gin.Context) {
 		Count(&total)
 
 	h.DB.Preload("Users").Preload("DebitUser").Limit(limit).Offset(offset).
+		Order(utils.SortMapToString(requestPayload.Request.Sort)).
 		Where(
 			model.ListOfExpenses{
 				BaseEntity: model.BaseEntity{

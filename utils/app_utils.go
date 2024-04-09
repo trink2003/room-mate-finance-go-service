@@ -13,6 +13,7 @@ import (
 	"os"
 	"room-mate-finance-go-service/constant"
 	"strconv"
+	"strings"
 	"time"
 )
 
@@ -163,4 +164,12 @@ func EndOfMonth(date time.Time) time.Time {
 	result := date.AddDate(0, 1, -date.Day())
 	fmt.Printf("EndOfMonth time zone is %s\n", result.Location().String())
 	return time.Date(result.Year(), result.Month(), result.Day(), 23, 59, 59, result.Nanosecond(), result.Location())
+}
+
+func SortMapToString(inputMap map[string]string) string {
+	result := ""
+	for k, v := range inputMap {
+		result += k + " " + v + ", "
+	}
+	return strings.TrimSuffix(result, ", ")
 }

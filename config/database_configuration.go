@@ -11,9 +11,11 @@ import (
 )
 
 func InitDatabaseConnection() (db *gorm.DB, err error) {
-	// if databaseUsername, ok := os.LookupEnv("DATABASE_USERNAME"); !ok {
-	// 	databaseUsername = "root"
-	// }
+	/*
+		if databaseUsername, ok := os.LookupEnv("DATABASE_USERNAME"); !ok {
+			databaseUsername = "root"
+		}
+	*/
 	var databaseUsername = os.Getenv("DATABASE_USERNAME")
 	if databaseUsername == "" {
 		databaseUsername = "postgres"
@@ -34,14 +36,16 @@ func InitDatabaseConnection() (db *gorm.DB, err error) {
 	if databaseName == "" {
 		databaseName = "room-mate-finance"
 	}
-	// dsn := fmt.Sprintf(
-	// 	"%s:%s@tcp(%s:%s)/%s?charset=utf8mb4&parseTime=True&loc=Local",
-	// 	databaseUsername,
-	// 	databasePassword,
-	// 	databaseHost,
-	// 	databasePort,
-	// 	databaseName,
-	// )
+	/*
+		dsn := fmt.Sprintf(
+			"%s:%s@tcp(%s:%s)/%s?charset=utf8mb4&parseTime=True&loc=Local",
+			databaseUsername,
+			databasePassword,
+			databaseHost,
+			databasePort,
+			databaseName,
+		)
+	*/
 	dsn := fmt.Sprintf(
 		"host=%s user=%s password=%s dbname=%s port=%s sslmode=disable TimeZone=Asia/Shanghai",
 		databaseHost,
@@ -78,19 +82,22 @@ func InitDatabaseConnection() (db *gorm.DB, err error) {
 	// SetConnMaxLifetime sets the maximum amount of time a connection may be reused.
 	sqlDB.SetConnMaxLifetime(time.Hour)
 
-	// usersMigrateErr := db.AutoMigrate(&model.Users{})
-	// if usersMigrateErr != nil {
-	// 	return nil, usersMigrateErr
-	// }
+	/*
+		usersMigrateErr := db.AutoMigrate(&model.Users{})
+		if usersMigrateErr != nil {
+			return nil, usersMigrateErr
+		}
 
-	// debitUserMigrateErr := db.AutoMigrate(&model.DebitUser{})
-	// if debitUserMigrateErr != nil {
-	// 	return nil, debitUserMigrateErr
-	// }
+		debitUserMigrateErr := db.AutoMigrate(&model.DebitUser{})
+		if debitUserMigrateErr != nil {
+			return nil, debitUserMigrateErr
+		}
 
-	// listOfExpensesMigrateErr := db.AutoMigrate(&model.ListOfExpenses{})
-	// if listOfExpensesMigrateErr != nil {
-	// 	return nil, listOfExpensesMigrateErr
-	// }
+		listOfExpensesMigrateErr := db.AutoMigrate(&model.ListOfExpenses{})
+		if listOfExpensesMigrateErr != nil {
+			return nil, listOfExpensesMigrateErr
+		}
+	*/
+
 	return db, err
 }
