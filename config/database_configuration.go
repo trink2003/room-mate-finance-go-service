@@ -1,12 +1,14 @@
 package config
 
 import (
+	"context"
 	"fmt"
 	"github.com/charmbracelet/log"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
 	"os"
+	"room-mate-finance-go-service/constant"
 	"time"
 )
 
@@ -63,8 +65,14 @@ func InitDatabaseConnection() (db *gorm.DB, err error) {
 			databasePort,
 		),
 	)
+	/*
+		db, err = gorm.Open(postgres.Open(dsn), &gorm.Config{
+			Logger: logger.Default.LogMode(logger.Info),
+		})
+	*/
+	myLog := dbLogger{}
 	db, err = gorm.Open(postgres.Open(dsn), &gorm.Config{
-		Logger: logger.Default.LogMode(logger.Info),
+		Logger: myLog.LogMode(logger.Info),
 	})
 	if err != nil {
 		log.Error(err)
@@ -100,4 +108,97 @@ func InitDatabaseConnection() (db *gorm.DB, err error) {
 	*/
 
 	return db, err
+}
+
+type dbLogger struct{}
+
+func (d *dbLogger) LogMode(level logger.LogLevel) logger.Interface {
+	return d
+}
+func (d *dbLogger) Info(ctx context.Context, s string, i ...interface{}) {
+	usernameFromContext := ctx.Value("username")
+	traceIdFromContext := ctx.Value("traceId")
+	username := ""
+	traceId := ""
+	if usernameFromContext != nil {
+		username = usernameFromContext.(string)
+	}
+	if traceIdFromContext != nil {
+		traceId = traceIdFromContext.(string)
+	}
+	log.Info(
+		fmt.Sprintf(
+			constant.LogPattern,
+			traceId,
+			username,
+			s,
+		),
+	)
+}
+func (d *dbLogger) Warn(ctx context.Context, s string, i ...interface{}) {
+	usernameFromContext := ctx.Value("username")
+	traceIdFromContext := ctx.Value("traceId")
+	username := ""
+	traceId := ""
+	if usernameFromContext != nil {
+		username = usernameFromContext.(string)
+	}
+	if traceIdFromContext != nil {
+		traceId = traceIdFromContext.(string)
+	}
+	log.Warn(
+		fmt.Sprintf(
+			constant.LogPattern,
+			traceId,
+			username,
+			s,
+		),
+	)
+}
+func (d *dbLogger) Error(ctx context.Context, s string, i ...interface{}) {
+	usernameFromContext := ctx.Value("username")
+	traceIdFromContext := ctx.Value("traceId")
+	username := ""
+	traceId := ""
+	if usernameFromContext != nil {
+		username = usernameFromContext.(string)
+	}
+	if traceIdFromContext != nil {
+		traceId = traceIdFromContext.(string)
+	}
+	log.Error(
+		fmt.Sprintf(
+			constant.LogPattern,
+			traceId,
+			username,
+			s,
+		),
+	)
+}
+func (d *dbLogger) Trace(ctx context.Context, begin time.Time, fc func() (sql string, rowsAffected int64), err error) {
+	sql, rowsAffected := fc()
+	usernameFromContext := ctx.Value("username")
+	traceIdFromContext := ctx.Value("traceId")
+	username := ""
+	traceId := ""
+	if usernameFromContext != nil {
+		username = usernameFromContext.(string)
+	}
+	if traceIdFromContext != nil {
+		traceId = traceIdFromContext.(string)
+	}
+	log.Info(
+		fmt.Sprintf(
+			constant.LogPattern,
+			traceId,
+			username,
+			fmt.Sprintf(
+				"info:\n    - sql: %s\n    - rowsAffected: %v\n    - begin: %s\n    - error: %s",
+				sql,
+				rowsAffected,
+				begin.Format(constant.YyyyMmDdHhMmSsFormat),
+				err,
+			),
+		),
+	)
 }

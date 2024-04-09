@@ -1,6 +1,7 @@
 package service
 
 import (
+	"context"
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
 	"math/big"
@@ -12,6 +13,26 @@ import (
 )
 
 func (h UserHandler) GetUsers(c *gin.Context) {
+
+	currentUser, isCurrentUserExist := utils.GetCurrentUsername(c)
+
+	ctx := context.Background()
+
+	ctx = context.WithValue(ctx, "username", *currentUser)
+	ctx = context.WithValue(ctx, "traceId", utils.GetTraceId(c))
+
+	if isCurrentUserExist != nil {
+		c.AbortWithStatusJSON(
+			http.StatusUnauthorized,
+			ReturnResponse(
+				c,
+				constant.ErrorConstant["UNAUTHORIZED"],
+				nil,
+				isCurrentUserExist.Error(),
+			),
+		)
+		return
+	}
 
 	requestPayload := payload.PageRequestBody{}
 	if err := c.ShouldBindJSON(&requestPayload); err != nil {
@@ -34,7 +55,7 @@ func (h UserHandler) GetUsers(c *gin.Context) {
 
 	transactionResult := h.DB.Transaction(func(tx *gorm.DB) error {
 
-		tx.Model(&model.Users{}).
+		tx.WithContext(ctx).Model(&model.Users{}).
 			Where(
 				tx.Where(
 					model.Users{
@@ -45,7 +66,7 @@ func (h UserHandler) GetUsers(c *gin.Context) {
 				).Where("active is not null"),
 			).Count(&total)
 
-		tx.Limit(limit).
+		tx.WithContext(ctx).Limit(limit).
 			Offset(offset).
 			Order(utils.SortMapToString(requestPayload.Request.Sort)).
 			Where(

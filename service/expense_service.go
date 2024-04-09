@@ -20,6 +20,27 @@ import (
 )
 
 func (h *ExpenseHandler) AddNewExpense(c *gin.Context) {
+
+	currentUser, isCurrentUserExist := utils.GetCurrentUsername(c)
+
+	ctx := context.Background()
+
+	ctx = context.WithValue(ctx, "username", *currentUser)
+	ctx = context.WithValue(ctx, "traceId", utils.GetTraceId(c))
+
+	if isCurrentUserExist != nil {
+		c.AbortWithStatusJSON(
+			http.StatusUnauthorized,
+			ReturnResponse(
+				c,
+				constant.ErrorConstant["UNAUTHORIZED"],
+				nil,
+				isCurrentUserExist.Error(),
+			),
+		)
+		return
+	}
+
 	requestPayload := payload.ExpenseRequestBody{}
 
 	if err := c.ShouldBindJSON(&requestPayload); err != nil {
@@ -74,12 +95,6 @@ func (h *ExpenseHandler) AddNewExpense(c *gin.Context) {
 		return
 	}
 
-	currentUser, isCurrentUserExist := utils.GetCurrentUsername(c)
-
-	ctx := context.Background()
-
-	ctx = context.WithValue(ctx, "username", *currentUser)
-
 	if isCurrentUserExist != nil {
 		c.AbortWithStatusJSON(
 			http.StatusUnauthorized,
@@ -95,7 +110,7 @@ func (h *ExpenseHandler) AddNewExpense(c *gin.Context) {
 
 	boughtUser := model.Users{}
 
-	h.DB.Where(
+	h.DB.WithContext(ctx).Where(
 		&model.Users{
 			BaseEntity: model.BaseEntity{
 				Active: utils.GetPointerOfAnyValue(true),
@@ -119,9 +134,9 @@ func (h *ExpenseHandler) AddNewExpense(c *gin.Context) {
 
 	var numberOfActiveUser int64 = 0
 
-	h.DB. /*Clauses(clause.Locking{Strength: "UPDATE"}).*/
-		Model(&model.Users{}).
-		Where(
+	h.DB.WithContext(ctx). /*Clauses(clause.Locking{Strength: "UPDATE"}).*/
+				Model(&model.Users{}).
+				Where(
 			h.DB.
 				Where(
 					&model.Users{
@@ -139,7 +154,7 @@ func (h *ExpenseHandler) AddNewExpense(c *gin.Context) {
 
 	var allActiveUserInList []model.Users
 
-	h.DB.Clauses(clause.Locking{Strength: "UPDATE"}).
+	h.DB.WithContext(ctx).Clauses(clause.Locking{Strength: "UPDATE"}).
 		Where(
 			h.DB.
 				Where(
@@ -237,7 +252,7 @@ func (h *ExpenseHandler) AddNewExpense(c *gin.Context) {
 		),
 	)
 
-	expenseTransactionError := h.DB.Transaction(
+	expenseTransactionError := h.DB.WithContext(ctx).Transaction(
 		func(tx *gorm.DB) error {
 			if saveNewExpenseErr := SaveNewExpense(tx, &expense, ctx); saveNewExpenseErr.Error != nil {
 				return saveNewExpenseErr.Error
@@ -272,7 +287,7 @@ func (h *ExpenseHandler) AddNewExpense(c *gin.Context) {
 
 	var savedExpense []model.ListOfExpenses
 
-	h.DB.Preload("Users").Preload("DebitUser").Where(
+	h.DB.WithContext(ctx).Preload("Users").Preload("DebitUser").Where(
 		model.ListOfExpenses{
 			BaseEntity: model.BaseEntity{
 				Id: expense.BaseEntity.Id,
@@ -293,6 +308,26 @@ func (h *ExpenseHandler) AddNewExpense(c *gin.Context) {
 
 func (h *ExpenseHandler) RemoveExpense(c *gin.Context) {
 
+	currentUser, isCurrentUserExist := utils.GetCurrentUsername(c)
+
+	ctx := context.Background()
+
+	ctx = context.WithValue(ctx, "username", *currentUser)
+	ctx = context.WithValue(ctx, "traceId", utils.GetTraceId(c))
+
+	if isCurrentUserExist != nil {
+		c.AbortWithStatusJSON(
+			http.StatusUnauthorized,
+			ReturnResponse(
+				c,
+				constant.ErrorConstant["UNAUTHORIZED"],
+				nil,
+				isCurrentUserExist.Error(),
+			),
+		)
+		return
+	}
+
 	requestPayload := payload.RemoveExpenseBody{}
 	if err := c.ShouldBindJSON(&requestPayload); err != nil {
 		c.AbortWithStatusJSON(
@@ -309,7 +344,7 @@ func (h *ExpenseHandler) RemoveExpense(c *gin.Context) {
 
 	var expense model.ListOfExpenses
 
-	h.DB.Preload("Users").Preload("DebitUser").Where(
+	h.DB.WithContext(ctx).Preload("Users").Preload("DebitUser").Where(
 		model.ListOfExpenses{
 			BaseEntity: model.BaseEntity{
 				Id: requestPayload.Request,
@@ -329,7 +364,7 @@ func (h *ExpenseHandler) RemoveExpense(c *gin.Context) {
 		return
 	}
 
-	transactionResult := h.DB.Transaction(func(tx *gorm.DB) error {
+	transactionResult := h.DB.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
 		debitUserRemoveResult := tx.Delete(expense.DebitUser)
 		if debitUserRemoveResult.Error != nil {
 			return debitUserRemoveResult.Error
@@ -370,6 +405,7 @@ func (h *ExpenseHandler) SoftRemoveExpense(c *gin.Context) {
 	ctx := context.Background()
 
 	ctx = context.WithValue(ctx, "username", *currentUser)
+	ctx = context.WithValue(ctx, "traceId", utils.GetTraceId(c))
 
 	if isCurrentUserExist != nil {
 		c.AbortWithStatusJSON(
@@ -400,7 +436,7 @@ func (h *ExpenseHandler) SoftRemoveExpense(c *gin.Context) {
 
 	var errorEnum = constant.ErrorEnums{}
 
-	transactionResult := h.DB.Transaction(func(tx *gorm.DB) error {
+	transactionResult := h.DB.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
 
 		var expense model.ListOfExpenses
 
@@ -491,6 +527,7 @@ func (h *ExpenseHandler) ActiveRemoveExpense(c *gin.Context) {
 	ctx := context.Background()
 
 	ctx = context.WithValue(ctx, "username", *currentUser)
+	ctx = context.WithValue(ctx, "traceId", utils.GetTraceId(c))
 
 	if isCurrentUserExist != nil {
 		c.AbortWithStatusJSON(
@@ -521,7 +558,7 @@ func (h *ExpenseHandler) ActiveRemoveExpense(c *gin.Context) {
 
 	var errorEnum = constant.ErrorEnums{}
 
-	transactionResult := h.DB.Transaction(func(tx *gorm.DB) error {
+	transactionResult := h.DB.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
 
 		var expense model.ListOfExpenses
 
@@ -607,6 +644,26 @@ func (h *ExpenseHandler) ActiveRemoveExpense(c *gin.Context) {
 
 func (h *ExpenseHandler) ListExpense(c *gin.Context) {
 
+	currentUser, isCurrentUserExist := utils.GetCurrentUsername(c)
+
+	ctx := context.Background()
+
+	ctx = context.WithValue(ctx, "username", *currentUser)
+	ctx = context.WithValue(ctx, "traceId", utils.GetTraceId(c))
+
+	if isCurrentUserExist != nil {
+		c.AbortWithStatusJSON(
+			http.StatusUnauthorized,
+			ReturnResponse(
+				c,
+				constant.ErrorConstant["UNAUTHORIZED"],
+				nil,
+				isCurrentUserExist.Error(),
+			),
+		)
+		return
+	}
+
 	requestPayload := payload.PageRequestBody{}
 	if err := c.ShouldBindJSON(&requestPayload); err != nil {
 		c.AbortWithStatusJSON(
@@ -641,7 +698,7 @@ func (h *ExpenseHandler) ListExpense(c *gin.Context) {
 
 	var total int64 = 0
 
-	h.DB.Model(&model.ListOfExpenses{}).Preload("Users").Preload("DebitUser").
+	h.DB.WithContext(ctx).Model(&model.ListOfExpenses{}).Preload("Users").Preload("DebitUser").
 		Where(
 			model.ListOfExpenses{
 				BaseEntity: model.BaseEntity{
@@ -651,7 +708,7 @@ func (h *ExpenseHandler) ListExpense(c *gin.Context) {
 		).
 		Count(&total)
 
-	h.DB.Preload("Users").Preload("DebitUser").Limit(limit).Offset(offset).
+	h.DB.WithContext(ctx).Preload("Users").Preload("DebitUser").Limit(limit).Offset(offset).
 		Order(utils.SortMapToString(requestPayload.Request.Sort)).
 		Where(
 			model.ListOfExpenses{

@@ -115,8 +115,10 @@ func GetCurrentUsername(c *gin.Context) (username *string, err error) {
 
 	currentUser, isCurrentUserExist := c.Get("auth")
 
+	emptyString := constant.EmptyString
+
 	if isCurrentUserExist == false {
-		return nil, errors.New("can not get current username")
+		return &emptyString, errors.New("can not get current username")
 	}
 
 	claim := currentUser.(jwt.MapClaims)
@@ -169,7 +171,13 @@ func EndOfMonth(date time.Time) time.Time {
 func SortMapToString(inputMap map[string]string) string {
 	result := ""
 	for k, v := range inputMap {
-		result += k + " " + v + ", "
+		sort := ""
+		if v != constant.AscKeyword && v != constant.DescKeyword {
+			sort = constant.DescKeyword
+		} else {
+			sort = v
+		}
+		result += k + " " + sort + ", "
 	}
 	return strings.TrimSuffix(result, ", ")
 }

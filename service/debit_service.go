@@ -1,6 +1,7 @@
 package service
 
 import (
+	"context"
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
 	"net/http"
@@ -19,6 +20,26 @@ type CalculateResult struct {
 }
 
 func (h DebitHandler) CalculateDebitOfUser(c *gin.Context) {
+
+	currentUser, isCurrentUserExist := utils.GetCurrentUsername(c)
+
+	ctx := context.Background()
+
+	ctx = context.WithValue(ctx, "username", *currentUser)
+	ctx = context.WithValue(ctx, "traceId", utils.GetTraceId(c))
+
+	if isCurrentUserExist != nil {
+		c.AbortWithStatusJSON(
+			http.StatusUnauthorized,
+			ReturnResponse(
+				c,
+				constant.ErrorConstant["UNAUTHORIZED"],
+				nil,
+				isCurrentUserExist.Error(),
+			),
+		)
+		return
+	}
 	requestPayload := payload.CalculateDebitRequestBody{}
 
 	if err := c.ShouldBindJSON(&requestPayload); err != nil {
@@ -70,7 +91,7 @@ func (h DebitHandler) CalculateDebitOfUser(c *gin.Context) {
 	var calculateResult []CalculateResult
 	errorEnum := constant.ErrorConstant["SUCCESS"]
 
-	transactionResult := h.DB.Transaction(func(tx *gorm.DB) error {
+	transactionResult := h.DB.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
 
 		if requestPayload.Request.IsStatisticsAccordingToCurrentUser {
 
