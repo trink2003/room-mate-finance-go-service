@@ -17,10 +17,15 @@ type ExpenseHandler struct {
 	DB *gorm.DB
 }
 
+type DebitHandler struct {
+	DB *gorm.DB
+}
+
 func RegisterRoutes(router *gin.Engine, db *gorm.DB) {
 	userHandler := &UserHandler{DB: db}
 	authHandler := &AuthHandler{DB: db}
 	expenseHandler := &ExpenseHandler{DB: db}
+	debitHandler := &DebitHandler{DB: db}
 
 	router.Use(ErrorHandler)
 	router.Use(RequestLogger)
@@ -39,4 +44,7 @@ func RegisterRoutes(router *gin.Engine, db *gorm.DB) {
 	expenseRouter.POST("/remove_expense", Authentication, expenseHandler.RemoveExpense)
 	expenseRouter.POST("/soft_remove_expense", Authentication, expenseHandler.SoftRemoveExpense)
 	expenseRouter.POST("/active_expense", Authentication, expenseHandler.ActiveRemoveExpense)
+
+	debitRouter := router.Group("/debit")
+	debitRouter.POST("/calculate", Authentication, debitHandler.CalculateDebitOfUser)
 }

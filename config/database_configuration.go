@@ -20,11 +20,11 @@ func InitDatabaseConnection() (db *gorm.DB, err error) {
 	}
 	databasePassword := os.Getenv("DATABASE_PASSWORD")
 	if databasePassword == "" {
-		databasePassword = "postgres"
+		databasePassword = "mysecretpassword"
 	}
 	databaseHost := os.Getenv("DATABASE_HOST")
 	if databaseHost == "" {
-		databaseHost = "192.168.22.120"
+		databaseHost = "localhost"
 	}
 	databasePort := os.Getenv("DATABASE_PORT")
 	if databasePort == "" {

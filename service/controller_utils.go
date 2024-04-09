@@ -137,7 +137,7 @@ func ReturnResponse(c *gin.Context, errCode constant.ErrorEnums, responseData an
 	return &payload.Response{
 		Trace:        utils.GetTraceId(c),
 		ErrorCode:    errCode.ErrorCode,
-		ErrorMessage: strings.Trim(errCode.ErrorMessage, " ") + ". " + strings.Trim(message, " "),
+		ErrorMessage: strings.Trim(strings.Trim(errCode.ErrorMessage, " ")+". "+strings.Trim(message, " ")+".", " "),
 		Response:     responseData,
 	}
 }
@@ -158,7 +158,7 @@ func ReturnPageResponse(
 	return &payload.PageResponse{
 		Trace:        utils.GetTraceId(c),
 		ErrorCode:    errCode.ErrorCode,
-		ErrorMessage: strings.Trim(errCode.ErrorMessage, " ") + ". " + strings.Trim(message, " "),
+		ErrorMessage: strings.Trim(strings.Trim(errCode.ErrorMessage, " ")+". "+strings.Trim(message, " ")+".", " "),
 		TotalElement: totalElement,
 		TotalPage:    totalPage,
 		Response:     responseData,
