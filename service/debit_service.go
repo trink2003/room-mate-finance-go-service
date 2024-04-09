@@ -87,14 +87,47 @@ func (h DebitHandler) CalculateDebitOfUser(c *gin.Context) {
 			}
 
 			tx.Raw(
-				"select du.paid_to_user, du.user_to_paid, sum(du.amount) as \"amount\" from debit_user du left join list_of_expenses loe on loe.id = du.expense where du.paid_to_user = ? and du.created_at between to_timestamp(?, 'YYYY-MM-DD HH24:MI:SS') and to_timestamp(?, 'YYYY-MM-DD HH24:MI:SS') and loe.active is true and du.active is true group by du.paid_to_user, du.user_to_paid",
+				`
+					select
+						du.paid_to_user,
+						du.user_to_paid,
+						sum(du.amount) as "amount"
+					from
+						debit_user du
+						left join list_of_expenses loe on loe.id = du.expense
+					where
+						du.paid_to_user = ?
+						and du.created_at between to_timestamp(?, 'YYYY-MM-DD HH24:MI:SS')
+						and to_timestamp(?, 'YYYY-MM-DD HH24:MI:SS')
+						and loe.active is true
+						and du.active is true
+					group by
+						du.paid_to_user,
+						du.user_to_paid
+				`,
 				currentUser.BaseEntity.Id,
 				firstOfMonth.Format(constant.YyyyMmDdHhMmSsFormat),
 				lastOfMonth.Format(constant.YyyyMmDdHhMmSsFormat),
 			).Scan(&calculateResult)
 		} else {
 			tx.Raw(
-				"select du.paid_to_user, du.user_to_paid, sum(du.amount) as \"amount\" from debit_user du left join list_of_expenses loe on loe.id = du.expense where du.created_at between to_timestamp(?, 'YYYY-MM-DD HH24:MI:SS') and to_timestamp(?, 'YYYY-MM-DD HH24:MI:SS') and loe.active is true and du.active is true group by du.paid_to_user, du.user_to_paid",
+				`
+					select
+						du.paid_to_user,
+						du.user_to_paid,
+						sum(du.amount) as "amount"
+					from
+						debit_user du
+						left join list_of_expenses loe on loe.id = du.expense
+					where
+						du.created_at between to_timestamp(?, 'YYYY-MM-DD HH24:MI:SS')
+						and to_timestamp(?, 'YYYY-MM-DD HH24:MI:SS')
+						and loe.active is true
+						and du.active is true
+					group by
+						du.paid_to_user,
+						du.user_to_paid
+				`,
 				firstOfMonth.Format(constant.YyyyMmDdHhMmSsFormat),
 				lastOfMonth.Format(constant.YyyyMmDdHhMmSsFormat),
 			).Scan(&calculateResult)
