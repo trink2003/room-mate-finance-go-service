@@ -13,6 +13,7 @@ const DescKeyword = "DESC"
 const EmptyString = ""
 
 var SensitiveField = [...]string{"password", "jwt", "token", "client_secret"} // [...] instead of []: it ensures you get a (fixed size) array instead of a slice. So the values aren't fixed but the size is.
+var ValidMethod = []string{"GET", "POST", "PUT", "DELETE"}
 
 const LogPattern = "[%s] [%s] ⮞⮞ %s"
 
