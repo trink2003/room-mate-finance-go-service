@@ -20,6 +20,8 @@ RUN apt install telnet -y && apt install curl -y && apt install vim -y && apt in
 
 # You can stop at this line if you just want to build a pre-built image
 
+EXPOSE 8080
+
 ADD ./go-app /go-app
 
 CMD ["/go-app"]

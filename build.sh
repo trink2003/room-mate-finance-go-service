@@ -3,6 +3,9 @@
 echo -e "\n\n >> go mod download"
 go mod download
 
+docker compose down || echo -e "\n\n >> No service running"
+docker rmi tuanloc1105/room-mate-finance:latest || echo -e "\n\n >> No images"
+
 echo -e "\n\n >> go build -o ./go-app"
 CGO_ENABLED=0 GOOS=linux go build -o ./go-app
 
