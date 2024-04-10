@@ -15,7 +15,7 @@ services:
       context: .
       dockerfile: ./Dockerfile
   room-mate-finance-go-service-2:
-    container_name: room-mate-finance-service
+    container_name: room-mate-finance-service-2
     image: tuanloc1105/room-mate-finance:latest
     environment:
       - DATABASE_USERNAME=postgres
