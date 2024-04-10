@@ -1,6 +1,7 @@
 package main
 
 import (
+	"github.com/charmbracelet/log"
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	"net/http"
@@ -75,6 +76,7 @@ func main() {
 		),
 	)
 
+	log.Info("Application starting")
 	ginErr := router.Run(":" + applicationPort)
 	if ginErr != nil {
 		panic(ginErr)
