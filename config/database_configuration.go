@@ -187,6 +187,10 @@ func (d *dbLogger) Trace(ctx context.Context, begin time.Time, fc func() (sql st
 	if traceIdFromContext != nil {
 		traceId = traceIdFromContext.(string)
 	}
+	errorMessage := "no error"
+	if err != nil {
+		errorMessage = err.Error()
+	}
 	log.Info(
 		fmt.Sprintf(
 			constant.LogPattern,
@@ -197,7 +201,7 @@ func (d *dbLogger) Trace(ctx context.Context, begin time.Time, fc func() (sql st
 				sql,
 				rowsAffected,
 				begin.Format(constant.YyyyMmDdHhMmSsFormat),
-				err,
+				errorMessage,
 			),
 		),
 	)

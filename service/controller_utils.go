@@ -64,7 +64,7 @@ func RequestLogger(c *gin.Context) {
 			constant.LogPattern,
 			utils.GetTraceId(c),
 			currentUser,
-			message,
+			utils.HideSensitiveJsonField(message),
 		),
 	)
 	c.Next()
@@ -101,7 +101,7 @@ func ResponseLogger(c *gin.Context) {
 			constant.LogPattern,
 			utils.GetTraceId(c),
 			currentUser,
-			message,
+			utils.HideSensitiveJsonField(message),
 		),
 	)
 
@@ -137,7 +137,7 @@ func ReturnResponse(c *gin.Context, errCode constant.ErrorEnums, responseData an
 	return &payload.Response{
 		Trace:        utils.GetTraceId(c),
 		ErrorCode:    errCode.ErrorCode,
-		ErrorMessage: strings.Trim(strings.Trim(errCode.ErrorMessage, " ")+". "+strings.Trim(message, " ")+".", " "),
+		ErrorMessage: strings.Replace(strings.Trim(strings.Trim(errCode.ErrorMessage, " ")+". "+strings.Trim(message, " ")+".", " "), ". .", ".", -1),
 		Response:     responseData,
 	}
 }
@@ -158,7 +158,7 @@ func ReturnPageResponse(
 	return &payload.PageResponse{
 		Trace:        utils.GetTraceId(c),
 		ErrorCode:    errCode.ErrorCode,
-		ErrorMessage: strings.Trim(strings.Trim(errCode.ErrorMessage, " ")+". "+strings.Trim(message, " ")+".", " "),
+		ErrorMessage: strings.Replace(strings.Trim(strings.Trim(errCode.ErrorMessage, " ")+". "+strings.Trim(message, " ")+".", " "), ". .", ".", -1),
 		TotalElement: totalElement,
 		TotalPage:    totalPage,
 		Response:     responseData,

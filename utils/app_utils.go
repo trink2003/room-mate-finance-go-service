@@ -181,3 +181,32 @@ func SortMapToString(inputMap map[string]string) string {
 	}
 	return strings.TrimSuffix(result, ", ")
 }
+
+func HideSensitiveJsonField(inputJson string) string {
+	element := strings.Split(inputJson, "\"")
+	for i := range element {
+		currentField := element[i]
+		var colon string
+		if (len(element) == 0) || (i+1 > len(element)-1) {
+			continue
+		}
+		colon = element[i+1]
+		if isSensitive(currentField) {
+			if strings.Contains(strings.Trim(colon, " "), ":") {
+				element[i+2] = "***"
+			}
+		} else if i+2 < len(element) && len(element[i+2]) > 1000 {
+			element[i+2] = element[i+2][:50] + "..." + element[i+2][len(element[i+2])-50:]
+		}
+	}
+	return strings.Join(element, "\"")
+}
+
+func isSensitive(input string) bool {
+	for _, e := range constant.SensitiveField {
+		if strings.Contains(strings.ToLower(e), strings.ToLower(input)) || strings.Contains(strings.ToLower(input), strings.ToLower(e)) {
+			return true
+		}
+	}
+	return false
+}
