@@ -14,9 +14,9 @@ import (
 )
 
 type CalculateResult struct {
-	PaidToUser int64   `gorm:"column:paid_to_user;"`
-	UserToPaid int64   `gorm:"column:user_to_paid;"`
-	Amount     float64 `gorm:"column:amount;"`
+	PaidToUser int64   `json:"paidToUser" gorm:"column:paid_to_user;"`
+	UserToPaid int64   `json:"userToPaid" gorm:"column:user_to_paid;"`
+	Amount     float64 `json:"amount" gorm:"column:amount;"`
 }
 
 func (h DebitHandler) CalculateDebitOfUser(c *gin.Context) {
