@@ -45,9 +45,22 @@ func RequestLogger(c *gin.Context) {
 	if err := json.Compact(dst, body); err != nil && len(body) > 0 {
 		panic(err)
 	}
+
+	header := map[string][]string(c.Request.Header)
+
+	headerString := ""
+
+	for k, v := range header {
+		if utils.IsSensitiveField(k) {
+			headerString += fmt.Sprintf("\n\t\t- %s: %s", k, "***")
+		} else {
+			headerString += fmt.Sprintf("\n\t\t- %s: %s", k, strings.Join(v, ", "))
+		}
+	}
+
 	message := fmt.Sprintf(
 		"Request info:\n\t- header: %s\n\t- url: %s\n\t- method: %s\n\t- proto: %s\n\t- payload:\n\t%s",
-		c.Request.Header,
+		headerString,
 		c.Request.RequestURI,
 		c.Request.Method,
 		c.Request.Proto,
@@ -77,17 +90,34 @@ func RequestLogger(c *gin.Context) {
 func ResponseLogger(c *gin.Context) {
 	utils.CheckAndSetTraceId(c)
 	c.Writer.Header().Set("X-Content-Type-Options", "nosniff")
+	c.Writer.Header().Set("Access-Control-Allow-Origin", "*")
+	c.Writer.Header().Set("Access-Control-Allow-Methods", "POST, PUT, GET, OPTIONS, DELETE")
+	c.Writer.Header().Set("Access-Control-Max-Age", "3600")
+	c.Writer.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization, Content-Length, X-Requested-With, credential, X-XSRF-TOKEN")
 	blw := &BodyLogWriter{body: bytes.NewBufferString(""), ResponseWriter: c.Writer}
 	c.Writer = blw
 
 	c.Next()
 
+	header := map[string][]string(c.Writer.Header())
+
+	headerString := ""
+
+	for k, v := range header {
+		if utils.IsSensitiveField(k) {
+			headerString += fmt.Sprintf("\n\t\t- %s: %s", k, "***")
+		} else {
+			headerString += fmt.Sprintf("\n\t\t- %s: %s", k, strings.Join(v, ", "))
+		}
+	}
+
 	statusCode := c.Writer.Status()
 	message := fmt.Sprintf(
-		"Response info:\n\t- status code: %s\n\t- method: %s\n\t- url: %s\n\t- payload:\n\t%s",
+		"Response info:\n\t- status code: %s\n\t- method: %s\n\t- url: %s\n\t- header: %s\n\t- payload:\n\t%s",
 		strconv.Itoa(statusCode),
 		c.Request.Method,
 		c.Request.RequestURI,
+		headerString,
 		blw.body.String(),
 	)
 	currentUser := "unknown"

@@ -196,7 +196,7 @@ func HideSensitiveJsonField(inputJson string) string {
 			continue
 		}
 		colon = element[i+1]
-		if isSensitive(currentField) {
+		if IsSensitiveField(currentField) {
 			if strings.Contains(strings.Trim(colon, " "), ":") {
 				element[i+2] = "***"
 			}
@@ -207,7 +207,7 @@ func HideSensitiveJsonField(inputJson string) string {
 	return strings.Join(element, "\"")
 }
 
-func isSensitive(input string) bool {
+func IsSensitiveField(input string) bool {
 	for _, e := range constant.SensitiveField {
 		if strings.Contains(strings.ToLower(e), strings.ToLower(input)) || strings.Contains(strings.ToLower(input), strings.ToLower(e)) {
 			return true
