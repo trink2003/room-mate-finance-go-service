@@ -14,3 +14,18 @@ services:
     build:
       context: .
       dockerfile: ./Dockerfile
+  room-mate-finance-go-service-2:
+    container_name: room-mate-finance-service
+    image: tuanloc1105/room-mate-finance:latest
+    environment:
+      - DATABASE_USERNAME=postgres
+      - DATABASE_PASSWORD=mysecretpassword
+      - DATABASE_HOST=10.0.113.8
+      - DATABASE_PORT=5432
+      - DATABASE_NAME=room-mate-finance
+      - GIN_MODE=release
+    ports:
+      - "8080:8080"
+    build:
+      context: .
+      dockerfile: ./Dockerfile2

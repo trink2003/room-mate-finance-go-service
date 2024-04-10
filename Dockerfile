@@ -5,8 +5,6 @@ FROM ubuntu:24.04
 COPY --from=go /usr/local/go /usr/local/go
 COPY --from=go /go /go
 
-
-
 ENV GO_PATH="/usr/local/go"
 ENV PATH="$PATH:$GO_PATH/bin"
 ENV GO_ROOT="/go"
