@@ -94,7 +94,17 @@ func GenerateJwtToken(username string, role ...string) string {
 	return tokenString
 }
 
-func VerifyJwtToken(token string) (jwt.MapClaims, error) {
+func VerifyJwtToken(ctx context.Context, token string) (jwt.MapClaims, error) {
+	usernameFromContext := ctx.Value("username")
+	traceIdFromContext := ctx.Value("traceId")
+	username := ""
+	traceId := ""
+	if usernameFromContext != nil {
+		username = usernameFromContext.(string)
+	}
+	if traceIdFromContext != nil {
+		traceId = traceIdFromContext.(string)
+	}
 
 	secretKey := os.Getenv("JWT_SECRET_KEY")
 	if secretKey == "" {
@@ -105,7 +115,7 @@ func VerifyJwtToken(token string) (jwt.MapClaims, error) {
 		return []byte(secretKey), nil
 	})
 	if tokenParseError != nil {
-		log.Print(tokenParseError)
+		log.Printf(constant.LogPattern, traceId, username, tokenParseError.Error())
 		return nil, tokenParseError
 	}
 

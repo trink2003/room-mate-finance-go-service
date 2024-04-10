@@ -2,6 +2,7 @@ package service
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -138,17 +139,20 @@ func ResponseLogger(c *gin.Context) {
 }
 
 func Authentication(c *gin.Context) {
+	traceId := utils.GetTraceId(c)
+	ctx := context.Background()
+	ctx = context.WithValue(ctx, "traceId", traceId)
 	token := c.Request.Header.Get("Authorization")
 	var mapClaims jwt.MapClaims
 	var err error
 	if strings.Contains(token, "Bearer") {
-		mapClaims, err = utils.VerifyJwtToken(token[7:])
+		mapClaims, err = utils.VerifyJwtToken(ctx, token[7:])
 	} else {
-		mapClaims, err = utils.VerifyJwtToken(token)
+		mapClaims, err = utils.VerifyJwtToken(ctx, token)
 	}
 	if err != nil {
 		c.AbortWithStatusJSON(http.StatusUnauthorized, &payload.Response{
-			Trace:        utils.GetTraceId(c),
+			Trace:        traceId,
 			ErrorCode:    constant.ErrorConstant["UNAUTHORIZED"].ErrorCode,
 			ErrorMessage: constant.ErrorConstant["UNAUTHORIZED"].ErrorMessage,
 		})
