@@ -32,11 +32,13 @@ func (h AuthHandler) AddNewUser(ginContext *gin.Context) {
 		return
 	}
 	context = context2.WithValue(context, "username", requestPayload.Request.Username)
+	context = context2.WithValue(context, "traceId", utils.GetTraceId(ginContext))
 
 	var userInDatabase = model.Users{}
 
 	userInDatabaseQueryResult := h.
 		DB.
+		WithContext(context).
 		Limit(1).
 		Where(
 			"username = ? AND active is true OR active is false", requestPayload.Request.Username,
@@ -111,6 +113,8 @@ func (h AuthHandler) AddNewUser(ginContext *gin.Context) {
 }
 
 func (h AuthHandler) Login(ginContext *gin.Context) {
+	context := context2.Background()
+
 	requestPayload := &payload.UserLoginRequestBody{}
 
 	if err := ginContext.ShouldBindJSON(&requestPayload); err != nil {
@@ -126,10 +130,14 @@ func (h AuthHandler) Login(ginContext *gin.Context) {
 		return
 	}
 
+	context = context2.WithValue(context, "username", requestPayload.Request.Username)
+	context = context2.WithValue(context, "traceId", utils.GetTraceId(ginContext))
+
 	var userInDatabase = model.Users{}
 
 	userInDatabaseQueryResult := h.
 		DB.
+		WithContext(context).
 		Where(
 			"username = ? AND active is true", requestPayload.Request.Username,
 		).
@@ -205,5 +213,5 @@ func SaveNewUser(db *gorm.DB, user *model.Users, ctx context2.Context) error {
 		}
 		return nil
 	}
-	return db.Transaction(saveFunc)
+	return db.WithContext(ctx).Transaction(saveFunc)
 }

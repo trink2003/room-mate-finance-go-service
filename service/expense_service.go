@@ -763,7 +763,7 @@ func SaveNewExpense(db *gorm.DB, model *model.ListOfExpenses, ctx context.Contex
 	model.BaseEntity.CreatedBy = ctx.Value("username").(string)
 	model.BaseEntity.UpdatedBy = ctx.Value("username").(string)
 
-	return db.Create(model)
+	return db.WithContext(ctx).Create(model)
 }
 
 func SaveNewDebitUser(db *gorm.DB, model *model.DebitUser, ctx context.Context) *gorm.DB {
@@ -773,5 +773,5 @@ func SaveNewDebitUser(db *gorm.DB, model *model.DebitUser, ctx context.Context) 
 	model.BaseEntity.CreatedBy = ctx.Value("username").(string)
 	model.BaseEntity.UpdatedBy = ctx.Value("username").(string)
 
-	return db.Create(model)
+	return db.WithContext(ctx).Create(model)
 }
