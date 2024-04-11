@@ -287,7 +287,25 @@ func ConsumeApi(
 		)
 		return "", err
 	}
-	defer res.Body.Close()
+	defer func(Body io.ReadCloser) {
+		err := Body.Close()
+		if err != nil {
+
+		}
+	}(res.Body)
+
+	resHeader := map[string][]string(res.Header)
+
+	headerString := ""
+
+	for k, v := range resHeader {
+		if IsSensitiveField(k) {
+			headerString += fmt.Sprintf("\n\t\t- %s: %s", k, "***")
+		} else {
+			headerString += fmt.Sprintf("\n\t\t- %s: %s", k, strings.Join(v, ", "))
+		}
+	}
+
 	body, err := io.ReadAll(res.Body)
 	if err != nil {
 		log.Printf(
@@ -303,7 +321,12 @@ func ConsumeApi(
 		constant.LogPattern,
 		traceId,
 		username,
-		result,
+		fmt.Sprintf(
+			"\t- status: %s\n\t- header: %s\n\t- payload: %s",
+			res.Status,
+			headerString,
+			result,
+		),
 	)
 
 	return result, nil
