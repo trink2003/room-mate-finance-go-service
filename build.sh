@@ -3,7 +3,7 @@
 echo -e "\n\n >> go mod download"
 go mod download
 
-docker compose down || echo -e "\n\n >> No service running"
+docker compose -p room-mate-finance down || echo -e "\n\n >> No service running"
 docker rmi tuanloc1105/room-mate-finance:latest || echo -e "\n\n >> No images"
 
 echo -e "\n\n >> go build -o ./go-app"

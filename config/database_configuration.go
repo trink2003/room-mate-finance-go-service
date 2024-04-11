@@ -58,11 +58,16 @@ func InitDatabaseConnection() (db *gorm.DB, err error) {
 	)
 	log.Info(
 		fmt.Sprintf(
-			"Database connect info:\n    - databaseHost: %s\n    - databaseUsername: %s\n    - databaseName: %s\n    - databasePort: %s",
-			databaseHost,
-			databaseUsername,
-			databaseName,
-			databasePort,
+			constant.LogPattern,
+			"",
+			"",
+			fmt.Sprintf(
+				"Database connect info:\n    - databaseHost: %s\n    - databaseUsername: %s\n    - databaseName: %s\n    - databasePort: %s",
+				databaseHost,
+				databaseUsername,
+				databaseName,
+				databasePort,
+			),
 		),
 	)
 	/*
