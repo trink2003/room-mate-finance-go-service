@@ -56,9 +56,13 @@ func main() {
 	service.RegisterRoutes(router, db)
 
 	router.GET("/", func(ctx *gin.Context) {
-		ctx.JSON(200, gin.H{
-			"port": applicationPort,
-		})
+		ctx.Data(
+			http.StatusOK,
+			constant.ContentTypeHTML,
+			[]byte(`
+				<h1>Room mate finance service</h1><h3>This service is use for separate money for each daily expense for everybody in a room</h3>
+			`),
+		)
 	})
 
 	router.Use(

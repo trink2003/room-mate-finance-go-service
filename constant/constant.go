@@ -11,6 +11,13 @@ const YyyyMmDdHhMmSsFormat = "2006-01-02 15:04:05"
 const AscKeyword = "ASC"
 const DescKeyword = "DESC"
 const EmptyString = ""
+const (
+	ContentTypeBinary = "application/octet-stream"
+	ContentTypeForm   = "application/x-www-form-urlencoded"
+	ContentTypeJSON   = "application/json"
+	ContentTypeHTML   = "text/html; charset=utf-8"
+	ContentTypeText   = "text/plain; charset=utf-8"
+)
 
 var SensitiveField = [...]string{"password", "jwt", "token", "client_secret", "Authorization", "x-api-key"} // [...] instead of []: it ensures you get a (fixed size) array instead of a slice. So the values aren't fixed but the size is.
 var ValidMethod = []string{"GET", "POST", "PUT", "DELETE"}
