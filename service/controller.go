@@ -5,22 +5,6 @@ import (
 	"gorm.io/gorm"
 )
 
-type UserHandler struct {
-	DB *gorm.DB
-}
-
-type AuthHandler struct {
-	DB *gorm.DB
-}
-
-type ExpenseHandler struct {
-	DB *gorm.DB
-}
-
-type DebitHandler struct {
-	DB *gorm.DB
-}
-
 func RegisterRoutes(router *gin.Engine, db *gorm.DB) {
 	userHandler := &UserHandler{DB: db}
 	authHandler := &AuthHandler{DB: db}

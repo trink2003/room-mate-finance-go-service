@@ -75,7 +75,7 @@ func InitDatabaseConnection() (db *gorm.DB, err error) {
 			Logger: logger.Default.LogMode(logger.Info),
 		})
 	*/
-	myLog := dbLogger{}
+	myLog := &dbLogger{}
 	db, err = gorm.Open(postgres.Open(dsn), &gorm.Config{
 		Logger: myLog.LogMode(logger.Info),
 	})
