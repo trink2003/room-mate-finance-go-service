@@ -169,6 +169,19 @@ func (h AuthHandler) Login(ginContext *gin.Context) {
 		return
 	}
 
+	var role []string
+
+	h.DB.WithContext(context).Raw(`
+		select
+			r.role_name
+		from
+			users u
+			left join users_roles ur on ur.users_id = u.id
+			left join roles r on r.id = ur.roles_id
+		where
+			u.user_uid = ?
+    `, userInDatabase.UserUid).Scan(&role)
+
 	if comparePasswordError := utils.ComparePassword(requestPayload.Request.Password, userInDatabase.Password); comparePasswordError != nil {
 		ginContext.AbortWithStatusJSON(
 			http.StatusBadRequest,
@@ -182,7 +195,7 @@ func (h AuthHandler) Login(ginContext *gin.Context) {
 		return
 	}
 
-	token := utils.GenerateJwtToken(requestPayload.Request.Username)
+	token := utils.GenerateJwtToken(requestPayload.Request.Username, role...)
 
 	response := &payload.UserLoginResponseBody{
 		Token: token,
@@ -201,6 +214,7 @@ func (h AuthHandler) Login(ginContext *gin.Context) {
 
 func SaveNewUser(db *gorm.DB, user *model.Users, ctx context2.Context) error {
 	user.BaseEntity.Active = utils.GetPointerOfAnyValue(true)
+	user.BaseEntity.UUID = uuid.New().String()
 	user.BaseEntity.CreatedAt = time.Now()
 	user.BaseEntity.UpdatedAt = time.Now()
 	user.BaseEntity.CreatedBy = ctx.Value("username").(string)

@@ -82,7 +82,11 @@ var ErrorConstant = map[string]ErrorEnums{
 		ErrorMessage: "An error occurred while deleting daily spending data",
 	},
 	"EXPENSE_ACTIVE_NOT_SUCCESS": {
-		ErrorCode:    10,
+		ErrorCode:    11,
 		ErrorMessage: "An error occurred while activating daily spending data",
+	},
+	"FORBIDDEN": {
+		ErrorCode:    12,
+		ErrorMessage: "You don't have permission to perform this action",
 	},
 }

@@ -3,6 +3,7 @@ package service
 import (
 	"context"
 	"fmt"
+	"github.com/google/uuid"
 	"math/big"
 	"net/http"
 	"room-mate-finance-go-service/constant"
@@ -758,6 +759,7 @@ func (h *ExpenseHandler) ListExpense(c *gin.Context) {
 
 func SaveNewExpense(db *gorm.DB, model *model.ListOfExpenses, ctx context.Context) *gorm.DB {
 	model.BaseEntity.Active = utils.GetPointerOfAnyValue(true)
+	model.BaseEntity.UUID = uuid.New().String()
 	model.BaseEntity.CreatedAt = time.Now()
 	model.BaseEntity.UpdatedAt = time.Now()
 	model.BaseEntity.CreatedBy = ctx.Value("username").(string)
@@ -768,6 +770,7 @@ func SaveNewExpense(db *gorm.DB, model *model.ListOfExpenses, ctx context.Contex
 
 func SaveNewDebitUser(db *gorm.DB, model *model.DebitUser, ctx context.Context) *gorm.DB {
 	model.BaseEntity.Active = utils.GetPointerOfAnyValue(true)
+	model.BaseEntity.UUID = uuid.New().String()
 	model.BaseEntity.CreatedAt = time.Now()
 	model.BaseEntity.UpdatedAt = time.Now()
 	model.BaseEntity.CreatedBy = ctx.Value("username").(string)

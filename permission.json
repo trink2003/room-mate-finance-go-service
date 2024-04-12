@@ -1,0 +1,71 @@
+[
+  {
+    "url": "/auth/register",
+    "role": [
+      "ADMIN"
+    ]
+  },
+  {
+    "url": "/auth/login",
+    "role": [
+      "ADMIN",
+      "USER"
+    ]
+  },
+  {
+    "url": "/user/get_all_active_user",
+    "role": [
+      "ADMIN",
+      "USER"
+    ]
+  },
+  {
+    "url": "/expense/create_new_expense",
+    "role": [
+      "USER"
+    ]
+  },
+  {
+    "url": "/expense/get_list_of_expense",
+    "role": [
+      "ADMIN",
+      "USER"
+    ]
+  },
+  {
+    "url": "/expense/remove_expense",
+    "role": [
+      "USER"
+    ]
+  },
+  {
+    "url": "/expense/soft_remove_expense",
+    "role": [
+      "USER"
+    ]
+  },
+  {
+    "url": "/expense/active_expense",
+    "role": [
+      "USER"
+    ]
+  },
+  {
+    "url": "/debit/calculate",
+    "role": [
+      "USER"
+    ]
+  },
+  {
+    "url": "/",
+    "role": [
+      "*"
+    ]
+  },
+  {
+    "url": "/favicon.ico",
+    "role": [
+      "*"
+    ]
+  }
+]

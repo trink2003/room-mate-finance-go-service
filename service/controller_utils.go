@@ -7,9 +7,12 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"os"
+	"path/filepath"
 	"room-mate-finance-go-service/constant"
 	"room-mate-finance-go-service/payload"
 	"room-mate-finance-go-service/utils"
+	"slices"
 	"strconv"
 	"strings"
 
@@ -17,6 +20,11 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt/v5"
 )
+
+type Permission struct {
+	Url  string   `json:"url"`
+	Role []string `json:"role"`
+}
 
 type BodyLogWriter struct {
 	gin.ResponseWriter
@@ -159,7 +167,75 @@ func Authentication(c *gin.Context) {
 		return
 	}
 	c.Set("auth", mapClaims)
-	c.Next()
+	permissionList := *readPermissionJsonFile()
+	log.Info(
+		fmt.Sprintf(
+			constant.LogPattern,
+			traceId,
+			"",
+			fmt.Sprintf("Check permission for url: %v", c.Request.RequestURI),
+		),
+	)
+	for _, p := range permissionList {
+		log.Info(
+			fmt.Sprintf(
+				constant.LogPattern,
+				traceId,
+				"",
+				fmt.Sprintf("Current url: %v", p.Url),
+			),
+		)
+		if strings.Compare(strings.ToLower(c.Request.RequestURI), strings.ToLower(p.Url)) == 0 {
+			log.Info(
+				fmt.Sprintf(
+					constant.LogPattern,
+					traceId,
+					"",
+					fmt.Sprintf("This api is accessable with role: %v", p.Role),
+				),
+			)
+			if slices.Contains(p.Role, "*") {
+				c.Next()
+				return
+			}
+			userRole := mapClaims["aud"]
+			if userRole != nil {
+
+				roleList := userRole.([]interface{})
+				log.Info(
+					fmt.Sprintf(
+						constant.LogPattern,
+						traceId,
+						"",
+						fmt.Sprintf("This user have role: %v", roleList),
+					),
+				)
+				for _, rI := range roleList {
+					if slices.Contains(p.Role, fmt.Sprintf("%v", rI)) {
+						c.Next()
+						return
+					}
+				}
+				// fmt.Printf("\n\n%s - %T\n\n", userRole, userRole)
+			}
+			return
+		} else {
+			log.Info(
+				fmt.Sprintf(
+					constant.LogPattern,
+					traceId,
+					"",
+					"Not match",
+				),
+			)
+		}
+	}
+	c.AbortWithStatusJSON(http.StatusForbidden, &payload.Response{
+		Trace:        traceId,
+		ErrorCode:    constant.ErrorConstant["FORBIDDEN"].ErrorCode,
+		ErrorMessage: constant.ErrorConstant["FORBIDDEN"].ErrorMessage,
+	})
+	return
 }
 
 func ReturnResponse(c *gin.Context, errCode constant.ErrorEnums, responseData any, additionalMessage ...string) *payload.Response {
@@ -197,4 +273,33 @@ func ReturnPageResponse(
 		TotalPage:    totalPage,
 		Response:     responseData,
 	}
+}
+
+func readPermissionJsonFile() *[]Permission {
+	var result []Permission
+	filePath := filepath.Join(utils.GetCurrentDirectory(), "permission.json")
+	// log.Printf(filePath)
+	jsonFile, err := os.Open(filePath)
+	if err != nil {
+		// log.Printf(err.Error())
+		return &result
+	}
+
+	defer func(jsonFile *os.File) {
+		deferErr := jsonFile.Close()
+		if deferErr != nil {
+			// log.Printf(deferErr.Error())
+			panic(deferErr)
+		}
+	}(jsonFile)
+	byteValue, readAllErr := io.ReadAll(jsonFile)
+	if readAllErr != nil {
+		// log.Printf(readAllErr.Error())
+		return &result
+	}
+	// log.Printf(string(byteValue))
+	utils.ByteJsonToStruct(byteValue, &result)
+
+	return &result
+
 }

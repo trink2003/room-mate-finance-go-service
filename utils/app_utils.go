@@ -173,6 +173,13 @@ func JsonToStruct[T any](jsonString string, anyStruct *T) {
 	}
 }
 
+func ByteJsonToStruct[T any](jsonString []byte, anyStruct *T) {
+	err := json.Unmarshal(jsonString, anyStruct)
+	if err != nil {
+		return
+	}
+}
+
 func BeginningOfMonth(date time.Time) time.Time {
 	result := date.AddDate(0, 0, -date.Day()+1)
 	fmt.Printf("BeginningOfMonth time zone is %s\n", result.Location())
