@@ -24,4 +24,6 @@ EXPOSE 8080
 
 ADD ./go-app /go-app
 
+ADD ./icon/favicon.ico /icon/favicon.ico
+
 CMD ["/go-app"]
