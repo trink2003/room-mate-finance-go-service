@@ -218,7 +218,6 @@ func Authentication(c *gin.Context) {
 				}
 				// fmt.Printf("\n\n%s - %T\n\n", userRole, userRole)
 			}
-			return
 		} else {
 			log.Info(
 				fmt.Sprintf(
