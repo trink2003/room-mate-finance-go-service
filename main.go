@@ -65,6 +65,23 @@ func main() {
 		)
 	})
 
+	log.Info(
+		fmt.Sprintf(
+			constant.LogPattern,
+			"",
+			"",
+			"Current directory is: "+utils.GetCurrentDirectory(),
+		),
+	)
+
+	router.GET("/favicon.ico", func(ctx *gin.Context) {
+		ctx.Data(
+			http.StatusOK,
+			"image/x-icon",
+			utils.ReadFileFromPath(utils.GetCurrentDirectory(), "icon", "favicon.ico"),
+		)
+	})
+
 	router.Use(
 		cors.New(
 			cors.Config{
