@@ -1,0 +1,11 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ .Release.Name }}-cf
+  namespace: {{ .Release.Namespace }}
+data:
+  database_username: {{ .Values.database_username | quote }}
+  database_host: {{ .Values.database_host | quote }}
+  database_port: {{ .Values.database_port | quote }}
+  database_name: {{ .Values.database_name | quote }}
+  jwt_expire_time: {{ int64 .Values.jwt_expire_time | quote }}
