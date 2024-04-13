@@ -22,7 +22,18 @@ docker push ${images_name}:${images_tag}
 # kind load docker-image ${images_name}:${images_tag}
 
 echo -e "\n\n >> Upgrade application"
-helm upgrade -i --force --set image.name=${images_name},image.tag=${images_tag},replica=${replica} ${app_name} -n ${app_namespace} --create-namespace ./helm
+cat <<EOF | cat - | tee ./helm/Chart.yaml
+apiVersion: v2
+name: room-mate-finance-go-service
+description: A Helm chart for Kubernetes to deploy the room-mate-finance-go-service service
+
+type: application
+
+version: ${images_tag}
+
+appVersion: latest
+EOF
+helm upgrade -i --force --set image.name=${images_name},image.tag=${images_tag},replica=${replica},port=6060 ${app_name} -n ${app_namespace} --create-namespace ./helm
 
 echo -e "\n\n >> Remove images"
 docker rmi ${images_name}:${images_tag} || echo -e "\n\n >> No images"
