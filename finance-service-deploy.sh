@@ -1,19 +1,29 @@
 #!/bin/bash
 
-#!/bin/bash
+handle_error() {
+    echo "An error occurred on line $1"
+    read -p $'\n\n >> Press any key to exit \n\n' a
+    exit 1
+}
 
-cd ./room-mate-finance-go-service/
+trap 'handle_error $LINENO' ERR
 
-ssh_user="ae403"
-ssh_host="0.tcp.ap.ngrok.io"
-ssh_port="17742"
-target_dir='/home/ae403/service/room-mate-finance'
+if [ "$#" -lt 8 ]; then
+    echo "Usage: $0 images_name app_name app_namespace replica"
+    read -r
+    exit 1
+fi
 
-images_name='tuanloc/room-mate-finance'
-app_name='room-mate-finance'
-app_namespace='service'
+images_name="$1"
+app_name="$2"
+app_namespace="$3"
+replica="$4"
 images_tag=$(date -d "$b 0 min" "+%Y%m%d_%H%M%S")
-replica=2
+
+ssh_user="$5"
+ssh_host="$6"
+ssh_port="$7"
+target_dir="$8"
 
 echo -e "\n\n >> go mod download"
 go mod download
