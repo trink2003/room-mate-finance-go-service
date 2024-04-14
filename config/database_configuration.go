@@ -3,13 +3,14 @@ package config
 import (
 	"context"
 	"fmt"
+	"os"
+	"room-mate-finance-go-service/constant"
+	"time"
+
 	"github.com/charmbracelet/log"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
-	"os"
-	"room-mate-finance-go-service/constant"
-	"time"
 )
 
 func InitDatabaseConnection() (db *gorm.DB, err error) {
