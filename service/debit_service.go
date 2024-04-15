@@ -31,9 +31,9 @@ func (h DebitHandler) CalculateDebitOfUser(c *gin.Context) {
 	if isCurrentUserExist != nil {
 		c.AbortWithStatusJSON(
 			http.StatusUnauthorized,
-			ReturnResponse(
+			utils.ReturnResponse(
 				c,
-				constant.ErrorConstant["UNAUTHORIZED"],
+				constant.Unauthorized,
 				nil,
 				isCurrentUserExist.Error(),
 			),
@@ -45,9 +45,9 @@ func (h DebitHandler) CalculateDebitOfUser(c *gin.Context) {
 	if err := c.ShouldBindJSON(&requestPayload); err != nil {
 		c.AbortWithStatusJSON(
 			http.StatusBadRequest,
-			ReturnResponse(
+			utils.ReturnResponse(
 				c,
-				constant.ErrorConstant["JSON_BINDING_ERROR"],
+				constant.JsonBindingError,
 				nil,
 				err.Error(),
 			),
@@ -60,9 +60,9 @@ func (h DebitHandler) CalculateDebitOfUser(c *gin.Context) {
 	if isCurrentUserExist != nil {
 		c.AbortWithStatusJSON(
 			http.StatusUnauthorized,
-			ReturnResponse(
+			utils.ReturnResponse(
 				c,
-				constant.ErrorConstant["UNAUTHORIZED"],
+				constant.Unauthorized,
 				nil,
 				isCurrentUserExist.Error(),
 			),
@@ -74,9 +74,9 @@ func (h DebitHandler) CalculateDebitOfUser(c *gin.Context) {
 	if timeLoadLocationErr != nil {
 		c.AbortWithStatusJSON(
 			http.StatusInternalServerError,
-			ReturnResponse(
+			utils.ReturnResponse(
 				c,
-				constant.ErrorConstant["INTERNAL_FAILURE"],
+				constant.InternalFailure,
 				nil,
 				timeLoadLocationErr.Error(),
 			),
@@ -89,22 +89,22 @@ func (h DebitHandler) CalculateDebitOfUser(c *gin.Context) {
 	lastOfMonth := utils.EndOfMonth(currentTimestamp)
 
 	var calculateResult []CalculateResult
-	errorEnum := constant.ErrorConstant["SUCCESS"]
+	errorEnum := constant.Success
 
 	transactionResult := h.DB.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
 
 		if requestPayload.Request.IsStatisticsAccordingToCurrentUser {
 
-			currentUser := model.Users{}
+			currentUserModel := model.Users{}
 
 			tx.
 				Where(
 					"username = ? AND active is true", *currentUsername,
 				).
-				Find(&currentUser)
+				Find(&currentUserModel)
 
-			if currentUser.BaseEntity.Id == 0 {
-				errorEnum = constant.ErrorConstant["USER_NOT_EXISTED"]
+			if currentUserModel.BaseEntity.Id == 0 {
+				errorEnum = constant.UserNotExisted
 			}
 
 			tx.Raw(
@@ -126,7 +126,7 @@ func (h DebitHandler) CalculateDebitOfUser(c *gin.Context) {
 						du.paid_to_user,
 						du.user_to_paid
 				`,
-				currentUser.BaseEntity.Id,
+				currentUserModel.BaseEntity.Id,
 				firstOfMonth.Format(constant.YyyyMmDdHhMmSsFormat),
 				lastOfMonth.Format(constant.YyyyMmDdHhMmSsFormat),
 			).Scan(&calculateResult)
@@ -160,9 +160,9 @@ func (h DebitHandler) CalculateDebitOfUser(c *gin.Context) {
 	if transactionResult != nil {
 		c.AbortWithStatusJSON(
 			http.StatusBadRequest,
-			ReturnResponse(
+			utils.ReturnResponse(
 				c,
-				constant.ErrorConstant["QUERY_ERROR"],
+				constant.QueryError,
 				nil,
 				transactionResult.Error(),
 			),
@@ -172,7 +172,7 @@ func (h DebitHandler) CalculateDebitOfUser(c *gin.Context) {
 	if errorEnum.ErrorCode != 0 {
 		c.AbortWithStatusJSON(
 			http.StatusBadRequest,
-			ReturnResponse(
+			utils.ReturnResponse(
 				c,
 				errorEnum,
 				nil,
@@ -183,9 +183,9 @@ func (h DebitHandler) CalculateDebitOfUser(c *gin.Context) {
 
 	c.JSON(
 		http.StatusOK,
-		ReturnResponse(
+		utils.ReturnResponse(
 			c,
-			constant.ErrorConstant["SUCCESS"],
+			constant.Success,
 			calculateResult,
 		),
 	)

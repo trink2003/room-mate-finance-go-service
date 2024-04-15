@@ -1,4 +1,4 @@
-package service
+package utils
 
 import (
 	"bytes"
@@ -11,7 +11,6 @@ import (
 	"path/filepath"
 	"room-mate-finance-go-service/constant"
 	"room-mate-finance-go-service/payload"
-	"room-mate-finance-go-service/utils"
 	"slices"
 	"strconv"
 	"strings"
@@ -37,14 +36,14 @@ func (w BodyLogWriter) Write(b []byte) (int, error) {
 }
 
 func ErrorHandler(c *gin.Context) {
-	utils.CheckAndSetTraceId(c)
+	CheckAndSetTraceId(c)
 	if c.Errors != nil && len(c.Errors.Errors()) != 0 {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": c.Errors.Errors()})
 	}
 }
 
 func RequestLogger(c *gin.Context) {
-	utils.CheckAndSetTraceId(c)
+	CheckAndSetTraceId(c)
 	// t := time.Now()
 	var buf bytes.Buffer
 	tee := io.TeeReader(c.Request.Body, &buf)
@@ -60,7 +59,7 @@ func RequestLogger(c *gin.Context) {
 	headerString := ""
 
 	for k, v := range header {
-		if utils.IsSensitiveField(k) {
+		if IsSensitiveField(k) {
 			headerString += fmt.Sprintf("\n\t\t- %s: %s", k, "***")
 		} else {
 			headerString += fmt.Sprintf("\n\t\t- %s: %s", k, strings.Join(v, ", "))
@@ -84,9 +83,9 @@ func RequestLogger(c *gin.Context) {
 	log.Info(
 		fmt.Sprintf(
 			constant.LogPattern,
-			utils.GetTraceId(c),
+			GetTraceId(c),
 			currentUser,
-			utils.HideSensitiveJsonField(message),
+			HideSensitiveJsonField(message),
 		),
 	)
 	c.Next()
@@ -97,7 +96,7 @@ func RequestLogger(c *gin.Context) {
 }
 
 func ResponseLogger(c *gin.Context) {
-	utils.CheckAndSetTraceId(c)
+	CheckAndSetTraceId(c)
 	c.Writer.Header().Set("X-Content-Type-Options", "nosniff")
 	c.Writer.Header().Set("Access-Control-Allow-Origin", "*")
 	c.Writer.Header().Set("Access-Control-Allow-Methods", "POST, PUT, GET, OPTIONS, DELETE")
@@ -113,7 +112,7 @@ func ResponseLogger(c *gin.Context) {
 	headerString := ""
 
 	for k, v := range header {
-		if utils.IsSensitiveField(k) {
+		if IsSensitiveField(k) {
 			headerString += fmt.Sprintf("\n\t\t- %s: %s", k, "***")
 		} else {
 			headerString += fmt.Sprintf("\n\t\t- %s: %s", k, strings.Join(v, ", "))
@@ -138,31 +137,31 @@ func ResponseLogger(c *gin.Context) {
 	log.Info(
 		fmt.Sprintf(
 			constant.LogPattern,
-			utils.GetTraceId(c),
+			GetTraceId(c),
 			currentUser,
-			utils.HideSensitiveJsonField(message),
+			HideSensitiveJsonField(message),
 		),
 	)
 
 }
 
 func Authentication(c *gin.Context) {
-	traceId := utils.GetTraceId(c)
+	traceId := GetTraceId(c)
 	ctx := context.Background()
 	ctx = context.WithValue(ctx, "traceId", traceId)
 	token := c.Request.Header.Get("Authorization")
 	var mapClaims jwt.MapClaims
 	var err error
 	if strings.Contains(token, "Bearer") {
-		mapClaims, err = utils.VerifyJwtToken(ctx, token[7:])
+		mapClaims, err = VerifyJwtToken(ctx, token[7:])
 	} else {
-		mapClaims, err = utils.VerifyJwtToken(ctx, token)
+		mapClaims, err = VerifyJwtToken(ctx, token)
 	}
 	if err != nil {
 		c.AbortWithStatusJSON(http.StatusUnauthorized, &payload.Response{
 			Trace:        traceId,
-			ErrorCode:    constant.ErrorConstant["UNAUTHORIZED"].ErrorCode,
-			ErrorMessage: constant.ErrorConstant["UNAUTHORIZED"].ErrorMessage,
+			ErrorCode:    constant.Unauthorized.ErrorCode,
+			ErrorMessage: constant.Unauthorized.ErrorMessage,
 		})
 		return
 	}
@@ -237,6 +236,71 @@ func Authentication(c *gin.Context) {
 	return
 }
 
+func AuthenticationWithAuthorization(listOfRole []string) func(c *gin.Context) {
+	return func(c *gin.Context) {
+		traceId := GetTraceId(c)
+		ctx := context.Background()
+		ctx = context.WithValue(ctx, "traceId", traceId)
+		token := c.Request.Header.Get("Authorization")
+		var mapClaims jwt.MapClaims
+		var err error
+		if strings.Contains(token, "Bearer") {
+			mapClaims, err = VerifyJwtToken(ctx, token[7:])
+		} else {
+			mapClaims, err = VerifyJwtToken(ctx, token)
+		}
+		if err != nil {
+			c.AbortWithStatusJSON(http.StatusUnauthorized, &payload.Response{
+				Trace:        traceId,
+				ErrorCode:    constant.Unauthorized.ErrorCode,
+				ErrorMessage: constant.Unauthorized.ErrorMessage,
+			})
+			return
+		}
+		c.Set("auth", mapClaims)
+		log.Info(
+			fmt.Sprintf(
+				constant.LogPattern,
+				traceId,
+				"",
+				fmt.Sprintf("Check permission for url: %v", c.Request.RequestURI),
+			),
+		)
+		if listOfRole == nil || len(listOfRole) == 0 {
+			c.Next()
+			return
+		}
+		userRolesFromAccessToken := mapClaims["aud"]
+		if userRolesFromAccessToken != nil {
+			roleListInterface := userRolesFromAccessToken.([]interface{})
+			log.Info(
+				fmt.Sprintf(
+					constant.LogPattern,
+					traceId,
+					"",
+					fmt.Sprintf(
+						"\t- this user has role: %v\n\t- current api require user with role: %v",
+						roleListInterface,
+						listOfRole,
+					),
+				),
+			)
+			for _, roleListInterfaceElement := range roleListInterface {
+				if slices.Contains(listOfRole, fmt.Sprintf("%v", roleListInterfaceElement)) {
+					c.Next()
+					return
+				}
+			}
+		}
+		c.AbortWithStatusJSON(http.StatusForbidden, &payload.Response{
+			Trace:        traceId,
+			ErrorCode:    constant.ErrorConstant["FORBIDDEN"].ErrorCode,
+			ErrorMessage: constant.ErrorConstant["FORBIDDEN"].ErrorMessage,
+		})
+		return
+	}
+}
+
 func ReturnResponse(c *gin.Context, errCode constant.ErrorEnums, responseData any, additionalMessage ...string) *payload.Response {
 	message := ""
 	if len(additionalMessage) > 0 {
@@ -244,7 +308,7 @@ func ReturnResponse(c *gin.Context, errCode constant.ErrorEnums, responseData an
 	}
 
 	return &payload.Response{
-		Trace:        utils.GetTraceId(c),
+		Trace:        GetTraceId(c),
 		ErrorCode:    errCode.ErrorCode,
 		ErrorMessage: strings.Replace(strings.Trim(strings.Trim(errCode.ErrorMessage, " ")+". "+strings.Trim(message, " ")+".", " "), ". .", ".", -1),
 		Response:     responseData,
@@ -265,7 +329,7 @@ func ReturnPageResponse(
 	}
 
 	return &payload.PageResponse{
-		Trace:        utils.GetTraceId(c),
+		Trace:        GetTraceId(c),
 		ErrorCode:    errCode.ErrorCode,
 		ErrorMessage: strings.Replace(strings.Trim(strings.Trim(errCode.ErrorMessage, " ")+". "+strings.Trim(message, " ")+".", " "), ". .", ".", -1),
 		TotalElement: totalElement,
@@ -276,7 +340,7 @@ func ReturnPageResponse(
 
 func readPermissionJsonFile() *[]Permission {
 	var result []Permission
-	filePath := filepath.Join(utils.GetCurrentDirectory(), "permission.json")
+	filePath := filepath.Join(GetCurrentDirectory(), "permission.json")
 	// log.Printf(filePath)
 	jsonFile, err := os.Open(filePath)
 	if err != nil {
@@ -297,7 +361,7 @@ func readPermissionJsonFile() *[]Permission {
 		return &result
 	}
 	// log.Printf(string(byteValue))
-	utils.ByteJsonToStruct(byteValue, &result)
+	ByteJsonToStruct(byteValue, &result)
 
 	return &result
 

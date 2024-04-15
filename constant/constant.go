@@ -24,69 +24,73 @@ var ValidMethod = []string{"GET", "POST", "PUT", "DELETE"}
 
 const LogPattern = "[%s] [%s] 👉️ \t%s"
 
-var ErrorConstant = map[string]ErrorEnums{
-	"SUCCESS": {
+var (
+	Success = ErrorEnums{
 		ErrorCode:    0,
 		ErrorMessage: "Success",
-	},
-	"INTERNAL_FAILURE": {
+	}
+	InternalFailure = ErrorEnums{
 		ErrorCode:    -1,
 		ErrorMessage: "An error has been occurred, please try again later",
-	},
-	"PAGE_NOT_FOUND": {
+	}
+	PageNotFound = ErrorEnums{
 		ErrorCode:    -2,
 		ErrorMessage: "You're consuming an unknow endpoint, please check your url (404 Page Not Found)",
-	},
-	"METHOD_NOT_ALLOWED": {
+	}
+	MethodNotAllowed = ErrorEnums{
 		ErrorCode:    -3,
 		ErrorMessage: "This url is configured method that not match with your current method, please check again (405 Method Not Allowed)",
-	},
-	"QUERY_ERROR": {
+	}
+	QueryError = ErrorEnums{
 		ErrorCode:    1,
 		ErrorMessage: "Query error",
-	},
-	"CREATE_DUPLICATE_USER": {
+	}
+	CreateDuplicateUser = ErrorEnums{
 		ErrorCode:    2,
 		ErrorMessage: "User already exist",
-	},
-	"JSON_BINDING_ERROR": {
+	}
+	JsonBindingError = ErrorEnums{
 		ErrorCode:    3,
 		ErrorMessage: "Json binding error",
-	},
-	"AUTHENTICATE_FAILURE": {
+	}
+	AuthenticateFailure = ErrorEnums{
 		ErrorCode:    4,
 		ErrorMessage: "Authenticate fail",
-	},
-	"UNAUTHORIZED": {
+	}
+	Unauthorized = ErrorEnums{
 		ErrorCode:    5,
 		ErrorMessage: "Unauthorized",
-	},
-	"DATA_FORMAT_ERROR": {
+	}
+	DataFormatError = ErrorEnums{
 		ErrorCode:    6,
 		ErrorMessage: "Data format error",
-	},
-	"USER_NOT_EXISTED": {
+	}
+	UserNotExisted = ErrorEnums{
 		ErrorCode:    7,
 		ErrorMessage: "User not existed",
-	},
-	"INVALID_NUMBER_OF_USER": {
+	}
+	InvalidNumberOfUser = ErrorEnums{
 		ErrorCode:    8,
 		ErrorMessage: "The number of users in the same room must be greater than 2",
-	},
-	"INVALID_USER_TO_PAID_LIST": {
+	}
+	InvalidUserToPaidList = ErrorEnums{
 		ErrorCode:    9,
 		ErrorMessage: "The buyer must not be on the list of payers",
-	},
-	"EXPENSE_DELETE_NOT_SUCCESS": {
+	}
+	ExpenseDeleteNotSuccess = ErrorEnums{
 		ErrorCode:    10,
 		ErrorMessage: "An error occurred while deleting daily spending data",
-	},
-	"EXPENSE_ACTIVE_NOT_SUCCESS": {
+	}
+	ExpenseActiveNotSuccess = ErrorEnums{
 		ErrorCode:    11,
 		ErrorMessage: "An error occurred while activating daily spending data",
-	},
-	"FORBIDDEN": {
+	}
+	Forbidden = ErrorEnums{
 		ErrorCode:    12,
 		ErrorMessage: "You don't have permission to perform this action",
-	},
-}
+	}
+	RoomHasBeenExisted = ErrorEnums{
+		ErrorCode:    13,
+		ErrorMessage: "Room has been existed",
+	}
+)

@@ -32,9 +32,9 @@ func (h *ExpenseHandler) AddNewExpense(c *gin.Context) {
 	if isCurrentUserExist != nil {
 		c.AbortWithStatusJSON(
 			http.StatusUnauthorized,
-			ReturnResponse(
+			utils.ReturnResponse(
 				c,
-				constant.ErrorConstant["UNAUTHORIZED"],
+				constant.Unauthorized,
 				nil,
 				isCurrentUserExist.Error(),
 			),
@@ -47,9 +47,9 @@ func (h *ExpenseHandler) AddNewExpense(c *gin.Context) {
 	if err := c.ShouldBindJSON(&requestPayload); err != nil {
 		c.AbortWithStatusJSON(
 			http.StatusBadRequest,
-			ReturnResponse(
+			utils.ReturnResponse(
 				c,
-				constant.ErrorConstant["JSON_BINDING_ERROR"],
+				constant.JsonBindingError,
 				nil,
 				err.Error(),
 			),
@@ -60,9 +60,9 @@ func (h *ExpenseHandler) AddNewExpense(c *gin.Context) {
 	if requestPayload.Request.Amount <= 0 {
 		c.AbortWithStatusJSON(
 			http.StatusBadRequest,
-			ReturnResponse(
+			utils.ReturnResponse(
 				c,
-				constant.ErrorConstant["DATA_FORMAT_ERROR"],
+				constant.DataFormatError,
 				nil,
 				"Amount need to be equal or greater than 0",
 			),
@@ -73,9 +73,9 @@ func (h *ExpenseHandler) AddNewExpense(c *gin.Context) {
 	if len(requestPayload.Request.UserToPaid) == 0 {
 		c.AbortWithStatusJSON(
 			http.StatusBadRequest,
-			ReturnResponse(
+			utils.ReturnResponse(
 				c,
-				constant.ErrorConstant["DATA_FORMAT_ERROR"],
+				constant.DataFormatError,
 				nil,
 				"List of user need to pay must be not empty",
 			),
@@ -86,9 +86,9 @@ func (h *ExpenseHandler) AddNewExpense(c *gin.Context) {
 	if requestPayload.Request.Purpose == "" {
 		c.AbortWithStatusJSON(
 			http.StatusBadRequest,
-			ReturnResponse(
+			utils.ReturnResponse(
 				c,
-				constant.ErrorConstant["DATA_FORMAT_ERROR"],
+				constant.DataFormatError,
 				nil,
 				"What is your purpose of this expense?",
 			),
@@ -99,9 +99,9 @@ func (h *ExpenseHandler) AddNewExpense(c *gin.Context) {
 	if isCurrentUserExist != nil {
 		c.AbortWithStatusJSON(
 			http.StatusUnauthorized,
-			ReturnResponse(
+			utils.ReturnResponse(
 				c,
-				constant.ErrorConstant["UNAUTHORIZED"],
+				constant.Unauthorized,
 				nil,
 				isCurrentUserExist.Error(),
 			),
@@ -123,9 +123,9 @@ func (h *ExpenseHandler) AddNewExpense(c *gin.Context) {
 	if boughtUser.BaseEntity.Id == 0 {
 		c.AbortWithStatusJSON(
 			http.StatusNotFound,
-			ReturnResponse(
+			utils.ReturnResponse(
 				c,
-				constant.ErrorConstant["USER_NOT_EXISTED"],
+				constant.UserNotExisted,
 				nil,
 				"Who are you?",
 			),
@@ -136,8 +136,8 @@ func (h *ExpenseHandler) AddNewExpense(c *gin.Context) {
 	var numberOfActiveUser int64 = 0
 
 	h.DB.WithContext(ctx). /*Clauses(clause.Locking{Strength: "UPDATE"}).*/
-				Model(&model.Users{}).
-				Where(
+		Model(&model.Users{}).
+		Where(
 			h.DB.
 				Where(
 					&model.Users{
@@ -175,9 +175,9 @@ func (h *ExpenseHandler) AddNewExpense(c *gin.Context) {
 	if numberOfActiveUser < 2 || len(allActiveUserInList) < len(requestPayload.Request.UserToPaid) {
 		c.AbortWithStatusJSON(
 			http.StatusBadRequest,
-			ReturnResponse(
+			utils.ReturnResponse(
 				c,
-				constant.ErrorConstant["INVALID_NUMBER_OF_USER"],
+				constant.InvalidNumberOfUser,
 				nil,
 			),
 		)
@@ -187,9 +187,9 @@ func (h *ExpenseHandler) AddNewExpense(c *gin.Context) {
 	if slices.Contains(requestPayload.Request.UserToPaid, boughtUser.BaseEntity.Id) {
 		c.AbortWithStatusJSON(
 			http.StatusBadRequest,
-			ReturnResponse(
+			utils.ReturnResponse(
 				c,
-				constant.ErrorConstant["INVALID_USER_TO_PAID_LIST"],
+				constant.InvalidUserToPaidList,
 				nil,
 			),
 		)
@@ -276,9 +276,9 @@ func (h *ExpenseHandler) AddNewExpense(c *gin.Context) {
 	if expenseTransactionError != nil {
 		c.AbortWithStatusJSON(
 			http.StatusBadRequest,
-			ReturnResponse(
+			utils.ReturnResponse(
 				c,
-				constant.ErrorConstant["QUERY_ERROR"],
+				constant.QueryError,
 				nil,
 				expenseTransactionError.Error(),
 			),
@@ -298,9 +298,9 @@ func (h *ExpenseHandler) AddNewExpense(c *gin.Context) {
 
 	c.JSON(
 		http.StatusOK,
-		ReturnResponse(
+		utils.ReturnResponse(
 			c,
-			constant.ErrorConstant["SUCCESS"],
+			constant.Success,
 			savedExpense,
 		),
 	)
@@ -319,9 +319,9 @@ func (h *ExpenseHandler) RemoveExpense(c *gin.Context) {
 	if isCurrentUserExist != nil {
 		c.AbortWithStatusJSON(
 			http.StatusUnauthorized,
-			ReturnResponse(
+			utils.ReturnResponse(
 				c,
-				constant.ErrorConstant["UNAUTHORIZED"],
+				constant.Unauthorized,
 				nil,
 				isCurrentUserExist.Error(),
 			),
@@ -333,9 +333,9 @@ func (h *ExpenseHandler) RemoveExpense(c *gin.Context) {
 	if err := c.ShouldBindJSON(&requestPayload); err != nil {
 		c.AbortWithStatusJSON(
 			http.StatusBadRequest,
-			ReturnResponse(
+			utils.ReturnResponse(
 				c,
-				constant.ErrorConstant["JSON_BINDING_ERROR"],
+				constant.JsonBindingError,
 				nil,
 				err.Error(),
 			),
@@ -356,9 +356,9 @@ func (h *ExpenseHandler) RemoveExpense(c *gin.Context) {
 	if expense.BaseEntity.Id == 0 {
 		c.AbortWithStatusJSON(
 			http.StatusBadRequest,
-			ReturnResponse(
+			utils.ReturnResponse(
 				c,
-				constant.ErrorConstant["EXPENSE_DELETE_NOT_SUCCESS"],
+				constant.ExpenseDeleteNotSuccess,
 				nil,
 			),
 		)
@@ -379,9 +379,9 @@ func (h *ExpenseHandler) RemoveExpense(c *gin.Context) {
 	if transactionResult != nil {
 		c.AbortWithStatusJSON(
 			http.StatusBadRequest,
-			ReturnResponse(
+			utils.ReturnResponse(
 				c,
-				constant.ErrorConstant["QUERY_ERROR"],
+				constant.QueryError,
 				nil,
 				transactionResult.Error(),
 			),
@@ -391,9 +391,9 @@ func (h *ExpenseHandler) RemoveExpense(c *gin.Context) {
 
 	c.JSON(
 		http.StatusOK,
-		ReturnResponse(
+		utils.ReturnResponse(
 			c,
-			constant.ErrorConstant["SUCCESS"],
+			constant.Success,
 			nil,
 		),
 	)
@@ -411,9 +411,9 @@ func (h *ExpenseHandler) SoftRemoveExpense(c *gin.Context) {
 	if isCurrentUserExist != nil {
 		c.AbortWithStatusJSON(
 			http.StatusUnauthorized,
-			ReturnResponse(
+			utils.ReturnResponse(
 				c,
-				constant.ErrorConstant["UNAUTHORIZED"],
+				constant.Unauthorized,
 				nil,
 				isCurrentUserExist.Error(),
 			),
@@ -425,9 +425,9 @@ func (h *ExpenseHandler) SoftRemoveExpense(c *gin.Context) {
 	if err := c.ShouldBindJSON(&requestPayload); err != nil {
 		c.AbortWithStatusJSON(
 			http.StatusBadRequest,
-			ReturnResponse(
+			utils.ReturnResponse(
 				c,
-				constant.ErrorConstant["JSON_BINDING_ERROR"],
+				constant.JsonBindingError,
 				nil,
 				err.Error(),
 			),
@@ -452,7 +452,7 @@ func (h *ExpenseHandler) SoftRemoveExpense(c *gin.Context) {
 		).Find(&expense)
 
 		if expense.BaseEntity.Id == 0 {
-			errorEnum = constant.ErrorConstant["EXPENSE_DELETE_NOT_SUCCESS"]
+			errorEnum = constant.ExpenseDeleteNotSuccess
 			return nil
 		}
 
@@ -490,7 +490,7 @@ func (h *ExpenseHandler) SoftRemoveExpense(c *gin.Context) {
 	if errorEnum.ErrorCode != 0 {
 		c.AbortWithStatusJSON(
 			http.StatusBadRequest,
-			ReturnResponse(
+			utils.ReturnResponse(
 				c,
 				errorEnum,
 				nil,
@@ -501,9 +501,9 @@ func (h *ExpenseHandler) SoftRemoveExpense(c *gin.Context) {
 	if transactionResult != nil {
 		c.AbortWithStatusJSON(
 			http.StatusInternalServerError,
-			ReturnResponse(
+			utils.ReturnResponse(
 				c,
-				constant.ErrorConstant["QUERY_ERROR"],
+				constant.QueryError,
 				nil,
 				transactionResult.Error(),
 			),
@@ -513,9 +513,9 @@ func (h *ExpenseHandler) SoftRemoveExpense(c *gin.Context) {
 
 	c.JSON(
 		http.StatusOK,
-		ReturnResponse(
+		utils.ReturnResponse(
 			c,
-			constant.ErrorConstant["SUCCESS"],
+			constant.Success,
 			nil,
 		),
 	)
@@ -533,9 +533,9 @@ func (h *ExpenseHandler) ActiveRemoveExpense(c *gin.Context) {
 	if isCurrentUserExist != nil {
 		c.AbortWithStatusJSON(
 			http.StatusUnauthorized,
-			ReturnResponse(
+			utils.ReturnResponse(
 				c,
-				constant.ErrorConstant["UNAUTHORIZED"],
+				constant.Unauthorized,
 				nil,
 				isCurrentUserExist.Error(),
 			),
@@ -547,9 +547,9 @@ func (h *ExpenseHandler) ActiveRemoveExpense(c *gin.Context) {
 	if err := c.ShouldBindJSON(&requestPayload); err != nil {
 		c.AbortWithStatusJSON(
 			http.StatusBadRequest,
-			ReturnResponse(
+			utils.ReturnResponse(
 				c,
-				constant.ErrorConstant["JSON_BINDING_ERROR"],
+				constant.JsonBindingError,
 				nil,
 				err.Error(),
 			),
@@ -574,7 +574,7 @@ func (h *ExpenseHandler) ActiveRemoveExpense(c *gin.Context) {
 		).Find(&expense)
 
 		if expense.BaseEntity.Id == 0 {
-			errorEnum = constant.ErrorConstant["EXPENSE_ACTIVE_NOT_SUCCESS"]
+			errorEnum = constant.ExpenseActiveNotSuccess
 			return nil
 		}
 
@@ -612,7 +612,7 @@ func (h *ExpenseHandler) ActiveRemoveExpense(c *gin.Context) {
 	if errorEnum.ErrorCode != 0 {
 		c.AbortWithStatusJSON(
 			http.StatusBadRequest,
-			ReturnResponse(
+			utils.ReturnResponse(
 				c,
 				errorEnum,
 				nil,
@@ -623,9 +623,9 @@ func (h *ExpenseHandler) ActiveRemoveExpense(c *gin.Context) {
 	if transactionResult != nil {
 		c.AbortWithStatusJSON(
 			http.StatusInternalServerError,
-			ReturnResponse(
+			utils.ReturnResponse(
 				c,
-				constant.ErrorConstant["QUERY_ERROR"],
+				constant.QueryError,
 				nil,
 				transactionResult.Error(),
 			),
@@ -635,9 +635,9 @@ func (h *ExpenseHandler) ActiveRemoveExpense(c *gin.Context) {
 
 	c.JSON(
 		http.StatusOK,
-		ReturnResponse(
+		utils.ReturnResponse(
 			c,
-			constant.ErrorConstant["SUCCESS"],
+			constant.Success,
 			nil,
 		),
 	)
@@ -655,9 +655,9 @@ func (h *ExpenseHandler) ListExpense(c *gin.Context) {
 	if isCurrentUserExist != nil {
 		c.AbortWithStatusJSON(
 			http.StatusUnauthorized,
-			ReturnResponse(
+			utils.ReturnResponse(
 				c,
-				constant.ErrorConstant["UNAUTHORIZED"],
+				constant.Unauthorized,
 				nil,
 				isCurrentUserExist.Error(),
 			),
@@ -669,9 +669,9 @@ func (h *ExpenseHandler) ListExpense(c *gin.Context) {
 	if err := c.ShouldBindJSON(&requestPayload); err != nil {
 		c.AbortWithStatusJSON(
 			http.StatusBadRequest,
-			ReturnResponse(
+			utils.ReturnResponse(
 				c,
-				constant.ErrorConstant["JSON_BINDING_ERROR"],
+				constant.JsonBindingError,
 				nil,
 				err.Error(),
 			),
@@ -682,9 +682,9 @@ func (h *ExpenseHandler) ListExpense(c *gin.Context) {
 	if requestPayload.Request.PageSize == 0 || requestPayload.Request.PageNumber == 0 {
 		c.AbortWithStatusJSON(
 			http.StatusBadRequest,
-			ReturnResponse(
+			utils.ReturnResponse(
 				c,
-				constant.ErrorConstant["DATA_FORMAT_ERROR"],
+				constant.DataFormatError,
 				nil,
 				"Page number or page size can not be 0",
 			),
@@ -725,9 +725,9 @@ func (h *ExpenseHandler) ListExpense(c *gin.Context) {
 	if totalRecordsSelected == 0 {
 		c.JSON(
 			http.StatusOK,
-			ReturnPageResponse(
+			utils.ReturnPageResponse(
 				c,
-				constant.ErrorConstant["SUCCESS"],
+				constant.Success,
 				0,
 				0,
 				expense,
@@ -747,9 +747,9 @@ func (h *ExpenseHandler) ListExpense(c *gin.Context) {
 
 	c.JSON(
 		http.StatusOK,
-		ReturnPageResponse(
+		utils.ReturnPageResponse(
 			c,
-			constant.ErrorConstant["SUCCESS"],
+			constant.Success,
 			total,
 			totalPageInt.Int64(),
 			expense,

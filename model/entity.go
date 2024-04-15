@@ -14,11 +14,20 @@ type BaseEntity struct {
 	UpdatedBy string    `json:"updatedBy" gorm:"column:updated_by;"`
 }
 
+type Rooms struct {
+	BaseEntity BaseEntity `gorm:"embedded" json:"baseInfo"`
+	RoomName   string     `json:"roomName" gorm:"column:room_name;"`
+	RoomCode   string     `json:"roomCode" gorm:"column:room_code;unique;not null"`
+	Users      []Users    `json:"usersInRoom" gorm:"foreignKey:RoomsID"`
+}
+
 type Users struct {
 	BaseEntity     BaseEntity       `gorm:"embedded" json:"baseInfo"`
 	Username       string           `json:"username" gorm:"column:username;"`
 	Password       string           `json:"-" gorm:"column:password;"`
 	UserUid        string           `json:"userUid" gorm:"column:user_uid;"`
+	RoomsID        int64            `json:"-" gorm:"column:room_id;references:id"`
+	Rooms          Rooms            `json:"room" gorm:"->;<-:false;-:migration;foreignKey:Id"`
 	ListOfExpenses []ListOfExpenses `json:"listOfExpenses" gorm:"foreignKey:BoughtByUserID"`
 	UserToPaid     []DebitUser      `json:"userToPaid" gorm:"foreignKey:UserToPaidID"`
 	PaidToUser     []DebitUser      `json:"paidToUser" gorm:"foreignKey:PaidToUserID"`

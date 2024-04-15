@@ -19,3 +19,7 @@ type ExpenseHandler struct {
 type DebitHandler struct {
 	DB *gorm.DB
 }
+
+type RoomHandler struct {
+	DB *gorm.DB
+}

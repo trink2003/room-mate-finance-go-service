@@ -22,9 +22,9 @@ func (h AuthHandler) AddNewUser(ginContext *gin.Context) {
 	if err := ginContext.ShouldBindJSON(&requestPayload); err != nil {
 		ginContext.AbortWithStatusJSON(
 			http.StatusBadRequest,
-			ReturnResponse(
+			utils.ReturnResponse(
 				ginContext,
-				constant.ErrorConstant["JSON_BINDING_ERROR"],
+				constant.JsonBindingError,
 				nil,
 				err.Error(),
 			),
@@ -48,9 +48,9 @@ func (h AuthHandler) AddNewUser(ginContext *gin.Context) {
 	if userInDatabaseQueryResult.Error != nil {
 		ginContext.AbortWithStatusJSON(
 			http.StatusInternalServerError,
-			ReturnResponse(
+			utils.ReturnResponse(
 				ginContext,
-				constant.ErrorConstant["QUERY_ERROR"],
+				constant.QueryError,
 				nil,
 				userInDatabaseQueryResult.Error.Error(),
 			),
@@ -61,9 +61,9 @@ func (h AuthHandler) AddNewUser(ginContext *gin.Context) {
 	if userInDatabase.BaseEntity.Id != 0 {
 		ginContext.AbortWithStatusJSON(
 			http.StatusBadRequest,
-			ReturnResponse(
+			utils.ReturnResponse(
 				ginContext,
-				constant.ErrorConstant["CREATE_DUPLICATE_USER"],
+				constant.CreateDuplicateUser,
 				nil,
 			),
 		)
@@ -73,9 +73,9 @@ func (h AuthHandler) AddNewUser(ginContext *gin.Context) {
 	if encryptPasswordError := utils.EncryptPasswordPointer(&requestPayload.Request.Password); encryptPasswordError != nil {
 		ginContext.AbortWithStatusJSON(
 			http.StatusBadRequest,
-			ReturnResponse(
+			utils.ReturnResponse(
 				ginContext,
-				constant.ErrorConstant["DATA_FORMAT_ERROR"],
+				constant.DataFormatError,
 				nil,
 				encryptPasswordError.Error(),
 			),
@@ -92,9 +92,9 @@ func (h AuthHandler) AddNewUser(ginContext *gin.Context) {
 	if result := SaveNewUser(h.DB, &user, context); result != nil {
 		ginContext.AbortWithStatusJSON(
 			http.StatusBadRequest,
-			ReturnResponse(
+			utils.ReturnResponse(
 				ginContext,
-				constant.ErrorConstant["QUERY_ERROR"],
+				constant.QueryError,
 				nil,
 				result.Error(),
 			),
@@ -104,9 +104,9 @@ func (h AuthHandler) AddNewUser(ginContext *gin.Context) {
 
 	ginContext.JSON(
 		http.StatusOK,
-		ReturnResponse(
+		utils.ReturnResponse(
 			ginContext,
-			constant.ErrorConstant["SUCCESS"],
+			constant.Success,
 			user,
 		),
 	)
@@ -120,9 +120,9 @@ func (h AuthHandler) Login(ginContext *gin.Context) {
 	if err := ginContext.ShouldBindJSON(&requestPayload); err != nil {
 		ginContext.AbortWithStatusJSON(
 			http.StatusBadRequest,
-			ReturnResponse(
+			utils.ReturnResponse(
 				ginContext,
-				constant.ErrorConstant["JSON_BINDING_ERROR"],
+				constant.JsonBindingError,
 				nil,
 				err.Error(),
 			),
@@ -146,9 +146,9 @@ func (h AuthHandler) Login(ginContext *gin.Context) {
 	if userInDatabaseQueryResult.Error != nil {
 		ginContext.AbortWithStatusJSON(
 			http.StatusInternalServerError,
-			ReturnResponse(
+			utils.ReturnResponse(
 				ginContext,
-				constant.ErrorConstant["QUERY_ERROR"],
+				constant.QueryError,
 				nil,
 				userInDatabaseQueryResult.Error.Error(),
 			),
@@ -159,9 +159,9 @@ func (h AuthHandler) Login(ginContext *gin.Context) {
 	if userInDatabase.BaseEntity.Id == 0 {
 		ginContext.AbortWithStatusJSON(
 			http.StatusBadRequest,
-			ReturnResponse(
+			utils.ReturnResponse(
 				ginContext,
-				constant.ErrorConstant["AUTHENTICATE_FAILURE"],
+				constant.AuthenticateFailure,
 				nil,
 				"username invalid",
 			),
@@ -185,9 +185,9 @@ func (h AuthHandler) Login(ginContext *gin.Context) {
 	if comparePasswordError := utils.ComparePassword(requestPayload.Request.Password, userInDatabase.Password); comparePasswordError != nil {
 		ginContext.AbortWithStatusJSON(
 			http.StatusBadRequest,
-			ReturnResponse(
+			utils.ReturnResponse(
 				ginContext,
-				constant.ErrorConstant["AUTHENTICATE_FAILURE"],
+				constant.AuthenticateFailure,
 				nil,
 				"password invalid",
 			),
@@ -203,9 +203,9 @@ func (h AuthHandler) Login(ginContext *gin.Context) {
 
 	ginContext.JSON(
 		http.StatusOK,
-		ReturnResponse(
+		utils.ReturnResponse(
 			ginContext,
-			constant.ErrorConstant["SUCCESS"],
+			constant.Success,
 			response,
 		),
 	)

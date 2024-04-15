@@ -16,17 +16,12 @@ func (h UserHandler) GetUsers(c *gin.Context) {
 
 	currentUser, isCurrentUserExist := utils.GetCurrentUsername(c)
 
-	ctx := context.Background()
-
-	ctx = context.WithValue(ctx, "username", *currentUser)
-	ctx = context.WithValue(ctx, "traceId", utils.GetTraceId(c))
-
 	if isCurrentUserExist != nil {
 		c.AbortWithStatusJSON(
 			http.StatusUnauthorized,
-			ReturnResponse(
+			utils.ReturnResponse(
 				c,
-				constant.ErrorConstant["UNAUTHORIZED"],
+				constant.Unauthorized,
 				nil,
 				isCurrentUserExist.Error(),
 			),
@@ -34,13 +29,18 @@ func (h UserHandler) GetUsers(c *gin.Context) {
 		return
 	}
 
+	ctx := context.Background()
+
+	ctx = context.WithValue(ctx, "username", *currentUser)
+	ctx = context.WithValue(ctx, "traceId", utils.GetTraceId(c))
+
 	requestPayload := payload.PageRequestBody{}
 	if err := c.ShouldBindJSON(&requestPayload); err != nil {
 		c.AbortWithStatusJSON(
 			http.StatusBadRequest,
-			ReturnResponse(
+			utils.ReturnResponse(
 				c,
-				constant.ErrorConstant["JSON_BINDING_ERROR"],
+				constant.JsonBindingError,
 				nil,
 				err.Error(),
 			),
@@ -83,9 +83,9 @@ func (h UserHandler) GetUsers(c *gin.Context) {
 	if transactionResult != nil {
 		c.AbortWithStatusJSON(
 			http.StatusInternalServerError,
-			ReturnResponse(
+			utils.ReturnResponse(
 				c,
-				constant.ErrorConstant["QUERY_ERROR"],
+				constant.QueryError,
 				nil,
 				transactionResult.Error(),
 			),
@@ -98,9 +98,9 @@ func (h UserHandler) GetUsers(c *gin.Context) {
 	if totalRecordsSelected == 0 {
 		c.JSON(
 			http.StatusOK,
-			ReturnPageResponse(
+			utils.ReturnPageResponse(
 				c,
-				constant.ErrorConstant["SUCCESS"],
+				constant.Success,
 				0,
 				0,
 				user,
@@ -113,8 +113,8 @@ func (h UserHandler) GetUsers(c *gin.Context) {
 		if result := h.DB.Where("active is not null AND active is true ORDER BY id DESC").Find(&user); result.Error != nil {
 			c.AbortWithStatusJSON(http.StatusBadRequest, &payload.Response{
 				Trace:        utils.GetTraceId(c),
-				ErrorCode:    constant.ErrorConstant["QUERY_ERROR"].ErrorCode,
-				ErrorMessage: constant.ErrorConstant["QUERY_ERROR"].ErrorMessage + result.Error.Error(),
+				ErrorCode:    constant.QueryError.ErrorCode,
+				ErrorMessage: constant.QueryError.ErrorMessage + result.Error.Error(),
 			})
 			return
 		}
@@ -128,9 +128,9 @@ func (h UserHandler) GetUsers(c *gin.Context) {
 
 	c.JSON(
 		http.StatusOK,
-		ReturnPageResponse(
+		utils.ReturnPageResponse(
 			c,
-			constant.ErrorConstant["SUCCESS"],
+			constant.Success,
 			total,
 			totalPageInt.Int64(),
 			user,
