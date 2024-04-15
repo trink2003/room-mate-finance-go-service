@@ -6,6 +6,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 	"gorm.io/gorm"
+	"math/big"
 	"net/http"
 	"room-mate-finance-go-service/constant"
 	"room-mate-finance-go-service/model"
@@ -103,6 +104,113 @@ func (h RoomHandler) AddNewRoom(c *gin.Context) {
 		),
 	)
 
+}
+
+func (h RoomHandler) GetListOfRooms(c *gin.Context) {
+
+	ctx, isSuccess := utils.PrepareContext(c)
+
+	if !isSuccess {
+		return
+	}
+
+	requestPayload := payload.PageRequestBody{}
+	if err := c.ShouldBindJSON(&requestPayload); err != nil {
+		c.AbortWithStatusJSON(
+			http.StatusBadRequest,
+			utils.ReturnResponse(
+				c,
+				constant.JsonBindingError,
+				nil,
+				err.Error(),
+			),
+		)
+		return
+	}
+
+	if requestPayload.Request.PageSize == 0 || requestPayload.Request.PageNumber == 0 {
+		c.AbortWithStatusJSON(
+			http.StatusBadRequest,
+			utils.ReturnResponse(
+				c,
+				constant.DataFormatError,
+				nil,
+				"Page number or page size can not be 0",
+			),
+		)
+		return
+	}
+
+	limit := requestPayload.Request.PageSize
+	offset := requestPayload.Request.PageSize * (requestPayload.Request.PageNumber - 1)
+	var room []model.Rooms
+	var total int64 = 0
+
+	transactionResultError := h.DB.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
+		var countQueryResult = tx.WithContext(ctx).Model(&model.Rooms{}).Count(&total)
+
+		if countQueryResult.Error != nil {
+			return countQueryResult.Error
+		}
+
+		var getListOfRoomQueryResult = tx.WithContext(ctx).
+			Preload("Users").
+			Limit(limit).
+			Offset(offset).
+			Order(utils.SortMapToString(requestPayload.Request.Sort)).
+			Find(&room)
+
+		if getListOfRoomQueryResult.Error != nil {
+			return getListOfRoomQueryResult.Error
+		}
+
+		return nil
+	})
+
+	if transactionResultError != nil {
+		c.AbortWithStatusJSON(
+			http.StatusInternalServerError,
+			utils.ReturnResponse(
+				c,
+				constant.QueryError,
+				nil,
+				transactionResultError.Error(),
+			),
+		)
+		return
+	}
+
+	var totalRecordsSelected = len(room)
+
+	if totalRecordsSelected == 0 {
+		c.JSON(
+			http.StatusOK,
+			utils.ReturnPageResponse(
+				c,
+				constant.Success,
+				0,
+				0,
+				room,
+			),
+		)
+		return
+	}
+	totalBigNumber := new(big.Float).SetInt64(total)
+	totalRecordsSelectedBigNumber := new(big.Float).SetInt64(int64(totalRecordsSelected))
+	totalPage := new(big.Float).Quo(totalRecordsSelectedBigNumber, totalBigNumber)
+	utils.RoundHalfUpBigFloat(totalPage)
+	totalPageInt, _ := totalPage.Int(nil)
+
+	c.JSON(
+		http.StatusOK,
+		utils.ReturnPageResponse(
+			c,
+			constant.Success,
+			total,
+			totalPageInt.Int64(),
+			room,
+		),
+	)
 }
 
 func saveNewRoom(db *gorm.DB, model *model.Rooms, ctx context.Context) *gorm.DB {

@@ -36,4 +36,5 @@ func RegisterRoutes(router *gin.Engine, db *gorm.DB) {
 
 	roomRouter := router.Group("/roommate/api/v1/room")
 	roomRouter.POST("/add_new_room", utils.AuthenticationWithAuthorization([]string{"ADMIN"}), roomHandler.AddNewRoom)
+	roomRouter.POST("/get_list_of_rooms", utils.AuthenticationWithAuthorization([]string{"ADMIN"}), roomHandler.GetListOfRooms)
 }

@@ -48,6 +48,19 @@ func (h UserHandler) GetUsers(c *gin.Context) {
 		return
 	}
 
+	if requestPayload.Request.PageSize == 0 || requestPayload.Request.PageNumber == 0 {
+		c.AbortWithStatusJSON(
+			http.StatusBadRequest,
+			utils.ReturnResponse(
+				c,
+				constant.DataFormatError,
+				nil,
+				"Page number or page size can not be 0",
+			),
+		)
+		return
+	}
+
 	limit := requestPayload.Request.PageSize
 	offset := requestPayload.Request.PageSize * (requestPayload.Request.PageNumber - 1)
 	var user []model.Users

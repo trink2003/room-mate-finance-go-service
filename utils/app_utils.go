@@ -194,6 +194,11 @@ func EndOfMonth(date time.Time) time.Time {
 
 func SortMapToString(inputMap map[string]string) string {
 	result := ""
+
+	if inputMap == nil || len(inputMap) == 0 {
+		return result
+	}
+
 	for k, v := range inputMap {
 		sort := ""
 		if v != constant.AscKeyword && v != constant.DescKeyword {

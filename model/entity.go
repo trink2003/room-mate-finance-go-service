@@ -83,3 +83,6 @@ func (DebitUser) TableName() string {
 func (Roles) TableName() string {
 	return "roles"
 }
+func (Rooms) TableName() string {
+	return "rooms"
+}
