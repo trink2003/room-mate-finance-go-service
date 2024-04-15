@@ -24,8 +24,8 @@ func main() {
 			context.JSON(
 				http.StatusNotFound, &payload.Response{
 					Trace:        utils.GetTraceId(context),
-					ErrorCode:    constant.ErrorConstant["PAGE_NOT_FOUND"].ErrorCode,
-					ErrorMessage: constant.ErrorConstant["PAGE_NOT_FOUND"].ErrorMessage,
+					ErrorCode:    constant.PageNotFound.ErrorCode,
+					ErrorMessage: constant.PageNotFound.ErrorMessage,
 				},
 			)
 		},
@@ -36,8 +36,8 @@ func main() {
 			context.JSON(
 				http.StatusNotFound, &payload.Response{
 					Trace:        utils.GetTraceId(context),
-					ErrorCode:    constant.ErrorConstant["METHOD_NOT_ALLOWED"].ErrorCode,
-					ErrorMessage: constant.ErrorConstant["METHOD_NOT_ALLOWED"].ErrorMessage,
+					ErrorCode:    constant.MethodNotAllowed.ErrorCode,
+					ErrorMessage: constant.MethodNotAllowed.ErrorMessage,
 				},
 			)
 		},

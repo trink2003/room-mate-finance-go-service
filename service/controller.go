@@ -21,7 +21,7 @@ func RegisterRoutes(router *gin.Engine, db *gorm.DB) {
 	authRouter.POST("/register", authHandler.AddNewUser)
 	authRouter.POST("/login", authHandler.Login)
 
-	userRouter := router.Group("/user")
+	userRouter := router.Group("/roommate/api/v1/user")
 	userRouter.POST("/get_all_active_user", utils.AuthenticationWithAuthorization([]string{"ADMIN"}), userHandler.GetUsers)
 
 	expenseRouter := router.Group("/roommate/api/v1/expense")
@@ -35,5 +35,5 @@ func RegisterRoutes(router *gin.Engine, db *gorm.DB) {
 	debitRouter.POST("/calculate", utils.AuthenticationWithAuthorization([]string{"USER"}), debitHandler.CalculateDebitOfUser)
 
 	roomRouter := router.Group("/roommate/api/v1/room")
-	roomRouter.POST("/calculate", utils.AuthenticationWithAuthorization([]string{"ADMIN"}), roomHandler.AddNewRoom)
+	roomRouter.POST("/add_new_room", utils.AuthenticationWithAuthorization([]string{"ADMIN"}), roomHandler.AddNewRoom)
 }

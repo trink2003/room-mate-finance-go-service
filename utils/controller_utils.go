@@ -230,8 +230,8 @@ func Authentication(c *gin.Context) {
 	}
 	c.AbortWithStatusJSON(http.StatusForbidden, &payload.Response{
 		Trace:        traceId,
-		ErrorCode:    constant.ErrorConstant["FORBIDDEN"].ErrorCode,
-		ErrorMessage: constant.ErrorConstant["FORBIDDEN"].ErrorMessage,
+		ErrorCode:    constant.Forbidden.ErrorCode,
+		ErrorMessage: constant.Forbidden.ErrorMessage,
 	})
 	return
 }
@@ -279,7 +279,7 @@ func AuthenticationWithAuthorization(listOfRole []string) func(c *gin.Context) {
 					traceId,
 					"",
 					fmt.Sprintf(
-						"\t- this user has role: %v\n\t- current api require user with role: %v",
+						"\n\t- this user has role: %v\n\t- current api require user with role: %v",
 						roleListInterface,
 						listOfRole,
 					),
@@ -294,8 +294,8 @@ func AuthenticationWithAuthorization(listOfRole []string) func(c *gin.Context) {
 		}
 		c.AbortWithStatusJSON(http.StatusForbidden, &payload.Response{
 			Trace:        traceId,
-			ErrorCode:    constant.ErrorConstant["FORBIDDEN"].ErrorCode,
-			ErrorMessage: constant.ErrorConstant["FORBIDDEN"].ErrorMessage,
+			ErrorCode:    constant.Forbidden.ErrorCode,
+			ErrorMessage: constant.Forbidden.ErrorMessage,
 		})
 		return
 	}
