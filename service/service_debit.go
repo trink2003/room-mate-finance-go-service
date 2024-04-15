@@ -91,21 +91,33 @@ func (h DebitHandler) CalculateDebitOfUser(c *gin.Context) {
 	var calculateResult []CalculateResult
 	errorEnum := constant.Success
 
+	var currentUserModel = model.Users{}
+
+	h.DB.WithContext(ctx).Preload("Rooms").Where(
+		model.Users{
+			Username: *currentUsername,
+			BaseEntity: model.BaseEntity{
+				Active: utils.GetPointerOfAnyValue(true),
+			},
+		},
+	).Find(&currentUserModel)
+
+	if currentUserModel.BaseEntity.Id == 0 {
+		c.AbortWithStatusJSON(
+			http.StatusNotFound,
+			utils.ReturnResponse(
+				c,
+				constant.UserNotExisted,
+				nil,
+				"We can not determine who are you in the current session",
+			),
+		)
+		return
+	}
+
 	transactionResult := h.DB.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
 
 		if requestPayload.Request.IsStatisticsAccordingToCurrentUser {
-
-			currentUserModel := model.Users{}
-
-			tx.
-				Where(
-					"username = ? AND active is true", *currentUsername,
-				).
-				Find(&currentUserModel)
-
-			if currentUserModel.BaseEntity.Id == 0 {
-				errorEnum = constant.UserNotExisted
-			}
 
 			tx.Raw(
 				`
@@ -116,8 +128,11 @@ func (h DebitHandler) CalculateDebitOfUser(c *gin.Context) {
 					from
 						debit_user du
 						left join list_of_expenses loe on loe.id = du.expense
+						left join users u on u.id = loe.bought_by_user 
+						left join rooms r on r.id = u.room_id
 					where
-						du.paid_to_user = ?
+						r.room_code = ?
+						and du.paid_to_user = ?
 						and du.created_at between to_timestamp(?, 'YYYY-MM-DD HH24:MI:SS')
 						and to_timestamp(?, 'YYYY-MM-DD HH24:MI:SS')
 						and loe.active is true
@@ -126,6 +141,7 @@ func (h DebitHandler) CalculateDebitOfUser(c *gin.Context) {
 						du.paid_to_user,
 						du.user_to_paid
 				`,
+				currentUserModel.Rooms.RoomCode,
 				currentUserModel.BaseEntity.Id,
 				firstOfMonth.Format(constant.YyyyMmDdHhMmSsFormat),
 				lastOfMonth.Format(constant.YyyyMmDdHhMmSsFormat),
@@ -140,8 +156,11 @@ func (h DebitHandler) CalculateDebitOfUser(c *gin.Context) {
 					from
 						debit_user du
 						left join list_of_expenses loe on loe.id = du.expense
+						left join users u on u.id = loe.bought_by_user 
+						left join rooms r on r.id = u.room_id
 					where
-						du.created_at between to_timestamp(?, 'YYYY-MM-DD HH24:MI:SS')
+						r.room_code = ?
+						and du.created_at between to_timestamp(?, 'YYYY-MM-DD HH24:MI:SS')
 						and to_timestamp(?, 'YYYY-MM-DD HH24:MI:SS')
 						and loe.active is true
 						and du.active is true
@@ -149,6 +168,7 @@ func (h DebitHandler) CalculateDebitOfUser(c *gin.Context) {
 						du.paid_to_user,
 						du.user_to_paid
 				`,
+				currentUserModel.Rooms.RoomCode,
 				firstOfMonth.Format(constant.YyyyMmDdHhMmSsFormat),
 				lastOfMonth.Format(constant.YyyyMmDdHhMmSsFormat),
 			).Scan(&calculateResult)
