@@ -135,9 +135,9 @@ func (h Handler) AddNewExpense(c *gin.Context) {
 
 	var numberOfActiveUser int64 = 0
 
-	h.DB.WithContext(ctx). /*Clauses(clause.Locking{Strength: "UPDATE"}).*/
-				Model(&model.Users{}).
-				Where(
+	h.DB.WithContext(ctx).
+		Model(&model.Users{}).
+		Where(
 			h.DB.
 				Where(
 					&model.Users{
