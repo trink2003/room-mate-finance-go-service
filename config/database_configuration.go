@@ -182,6 +182,20 @@ func (d *dbLogger) Trace(ctx context.Context, begin time.Time, fc func() (sql st
 	errorMessage := "no error"
 	if err != nil {
 		errorMessage = err.Error()
+		log.Error(
+			fmt.Sprintf(
+				constant.LogPattern,
+				traceId,
+				username,
+				fmt.Sprintf(
+					"info:\n    - sql: %s\n    - rowsAffected: %v\n    - begin: %s\n    - error: %s",
+					sql,
+					rowsAffected,
+					begin.Format(constant.YyyyMmDdHhMmSsFormat),
+					errorMessage,
+				),
+			),
+		)
 	}
 	log.Info(
 		fmt.Sprintf(

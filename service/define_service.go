@@ -4,6 +4,7 @@ import (
 	"gorm.io/gorm"
 )
 
+/*
 type UserHandler struct {
 	DB *gorm.DB
 }
@@ -21,5 +22,10 @@ type DebitHandler struct {
 }
 
 type RoomHandler struct {
+	DB *gorm.DB
+}
+*/
+
+type Handler struct {
 	DB *gorm.DB
 }

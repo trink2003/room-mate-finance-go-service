@@ -13,7 +13,7 @@ import (
 	"room-mate-finance-go-service/utils"
 )
 
-func (h AuthHandler) AddNewUser(ginContext *gin.Context) {
+func (h Handler) AddNewUser(ginContext *gin.Context) {
 
 	context, isSuccess := utils.PrepareContext(ginContext)
 
@@ -185,7 +185,7 @@ func (h AuthHandler) AddNewUser(ginContext *gin.Context) {
 	)
 }
 
-func (h AuthHandler) Login(ginContext *gin.Context) {
+func (h Handler) Login(ginContext *gin.Context) {
 	context := context2.Background()
 
 	requestPayload := &payload.UserLoginRequestBody{}

@@ -16,7 +16,7 @@ import (
 	"time"
 )
 
-func (h RoomHandler) AddNewRoom(c *gin.Context) {
+func (h Handler) AddNewRoom(c *gin.Context) {
 
 	ctx, isSuccess := utils.PrepareContext(c)
 
@@ -107,7 +107,7 @@ func (h RoomHandler) AddNewRoom(c *gin.Context) {
 
 }
 
-func (h RoomHandler) GetListOfRooms(c *gin.Context) {
+func (h Handler) GetListOfRooms(c *gin.Context) {
 
 	ctx, isSuccess := utils.PrepareContext(c)
 
@@ -214,7 +214,7 @@ func (h RoomHandler) GetListOfRooms(c *gin.Context) {
 	)
 }
 
-func (h RoomHandler) DeleteRoom(c *gin.Context) {
+func (h Handler) DeleteRoom(c *gin.Context) {
 	ctx, isSuccess := utils.PrepareContext(c)
 
 	if !isSuccess {
@@ -340,7 +340,7 @@ func (h RoomHandler) DeleteRoom(c *gin.Context) {
 
 }
 
-func (h RoomHandler) EditRoomName(c *gin.Context) {
+func (h Handler) EditRoomName(c *gin.Context) {
 	ctx, isSuccess := utils.PrepareContext(c)
 	if !isSuccess {
 		return

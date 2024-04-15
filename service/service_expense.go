@@ -20,7 +20,7 @@ import (
 	"gorm.io/gorm/clause"
 )
 
-func (h *ExpenseHandler) AddNewExpense(c *gin.Context) {
+func (h Handler) AddNewExpense(c *gin.Context) {
 
 	currentUser, isCurrentUserExist := utils.GetCurrentUsername(c)
 
@@ -307,7 +307,7 @@ func (h *ExpenseHandler) AddNewExpense(c *gin.Context) {
 
 }
 
-func (h *ExpenseHandler) RemoveExpense(c *gin.Context) {
+func (h Handler) RemoveExpense(c *gin.Context) {
 
 	currentUser, isCurrentUserExist := utils.GetCurrentUsername(c)
 
@@ -399,7 +399,7 @@ func (h *ExpenseHandler) RemoveExpense(c *gin.Context) {
 	)
 }
 
-func (h *ExpenseHandler) SoftRemoveExpense(c *gin.Context) {
+func (h Handler) SoftRemoveExpense(c *gin.Context) {
 
 	currentUser, isCurrentUserExist := utils.GetCurrentUsername(c)
 
@@ -521,7 +521,7 @@ func (h *ExpenseHandler) SoftRemoveExpense(c *gin.Context) {
 	)
 }
 
-func (h *ExpenseHandler) ActiveRemoveExpense(c *gin.Context) {
+func (h Handler) ActiveRemoveExpense(c *gin.Context) {
 
 	currentUser, isCurrentUserExist := utils.GetCurrentUsername(c)
 
@@ -643,7 +643,7 @@ func (h *ExpenseHandler) ActiveRemoveExpense(c *gin.Context) {
 	)
 }
 
-func (h *ExpenseHandler) ListExpense(c *gin.Context) {
+func (h Handler) ListExpense(c *gin.Context) {
 
 	currentUser, isCurrentUserExist := utils.GetCurrentUsername(c)
 

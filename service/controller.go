@@ -7,36 +7,36 @@ import (
 )
 
 func RegisterRoutes(router *gin.Engine, db *gorm.DB) {
-	userHandler := &UserHandler{DB: db}
-	authHandler := &AuthHandler{DB: db}
-	expenseHandler := &ExpenseHandler{DB: db}
-	debitHandler := &DebitHandler{DB: db}
-	roomHandler := &RoomHandler{DB: db}
+	handler := &Handler{DB: db}
 
 	router.Use(utils.ErrorHandler)
 	router.Use(utils.RequestLogger)
 	router.Use(utils.ResponseLogger)
 
-	authRouter := router.Group("/roommate/api/v1/auth")
-	authRouter.POST("/register", utils.AuthenticationWithAuthorization([]string{"ADMIN"}), authHandler.AddNewUser)
-	authRouter.POST("/login", authHandler.Login)
+	var basePath = "/roommate/api/v1"
 
-	userRouter := router.Group("/roommate/api/v1/user")
-	userRouter.POST("/get_all_active_user", utils.AuthenticationWithAuthorization([]string{"ADMIN"}), userHandler.GetUsers)
+	authRouter := router.Group(basePath + "/auth")
+	authRouter.POST("/register", utils.AuthenticationWithAuthorization([]string{"ADMIN"}), handler.AddNewUser)
+	authRouter.POST("/login", handler.Login)
 
-	expenseRouter := router.Group("/roommate/api/v1/expense")
-	expenseRouter.POST("/create_new_expense", utils.AuthenticationWithAuthorization([]string{"USER"}), expenseHandler.AddNewExpense)
-	expenseRouter.POST("/get_list_of_expense", utils.AuthenticationWithAuthorization([]string{"ADMIN", "USER"}), expenseHandler.ListExpense)
-	expenseRouter.POST("/remove_expense", utils.AuthenticationWithAuthorization([]string{"USER"}), expenseHandler.RemoveExpense)
-	expenseRouter.POST("/soft_remove_expense", utils.AuthenticationWithAuthorization([]string{"USER"}), expenseHandler.SoftRemoveExpense)
-	expenseRouter.POST("/active_expense", utils.AuthenticationWithAuthorization([]string{"USER"}), expenseHandler.ActiveRemoveExpense)
+	userRouter := router.Group(basePath + "/user")
+	userRouter.POST("/get_all_active_user", utils.AuthenticationWithAuthorization([]string{"ADMIN"}), handler.GetUsers)
+	userRouter.POST("/get_member_in_room", utils.AuthenticationWithAuthorization([]string{"USER"}), handler.GetMemberInRoom)
+	userRouter.POST("/get_member_in_a_specific_room_code", utils.AuthenticationWithAuthorization([]string{"ADMIN"}), handler.GetMemberInASpecificRoomCode)
 
-	debitRouter := router.Group("/roommate/api/v1/debit")
-	debitRouter.POST("/calculate", utils.AuthenticationWithAuthorization([]string{"USER"}), debitHandler.CalculateDebitOfUser)
+	expenseRouter := router.Group(basePath + "/expense")
+	expenseRouter.POST("/create_new_expense", utils.AuthenticationWithAuthorization([]string{"USER"}), handler.AddNewExpense)
+	expenseRouter.POST("/get_list_of_expense", utils.AuthenticationWithAuthorization([]string{"ADMIN", "USER"}), handler.ListExpense)
+	expenseRouter.POST("/remove_expense", utils.AuthenticationWithAuthorization([]string{"USER"}), handler.RemoveExpense)
+	expenseRouter.POST("/soft_remove_expense", utils.AuthenticationWithAuthorization([]string{"USER"}), handler.SoftRemoveExpense)
+	expenseRouter.POST("/active_expense", utils.AuthenticationWithAuthorization([]string{"USER"}), handler.ActiveRemoveExpense)
 
-	roomRouter := router.Group("/roommate/api/v1/room")
-	roomRouter.POST("/add_new_room", utils.AuthenticationWithAuthorization([]string{"ADMIN"}), roomHandler.AddNewRoom)
-	roomRouter.POST("/get_list_of_rooms", utils.AuthenticationWithAuthorization([]string{"ADMIN"}), roomHandler.GetListOfRooms)
-	roomRouter.POST("/delete_room", utils.AuthenticationWithAuthorization([]string{"ADMIN"}), roomHandler.DeleteRoom)
-	roomRouter.POST("/edit_room_name", utils.AuthenticationWithAuthorization([]string{"ADMIN"}), roomHandler.EditRoomName)
+	debitRouter := router.Group(basePath + "/debit")
+	debitRouter.POST("/calculate", utils.AuthenticationWithAuthorization([]string{"USER"}), handler.CalculateDebitOfUser)
+
+	roomRouter := router.Group(basePath + "/room")
+	roomRouter.POST("/add_new_room", utils.AuthenticationWithAuthorization([]string{"ADMIN"}), handler.AddNewRoom)
+	roomRouter.POST("/get_list_of_rooms", utils.AuthenticationWithAuthorization([]string{"ADMIN"}), handler.GetListOfRooms)
+	roomRouter.POST("/delete_room", utils.AuthenticationWithAuthorization([]string{"ADMIN"}), handler.DeleteRoom)
+	roomRouter.POST("/edit_room_name", utils.AuthenticationWithAuthorization([]string{"ADMIN"}), handler.EditRoomName)
 }

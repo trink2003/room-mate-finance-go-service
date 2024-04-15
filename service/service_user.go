@@ -12,7 +12,7 @@ import (
 	"room-mate-finance-go-service/utils"
 )
 
-func (h UserHandler) GetUsers(c *gin.Context) {
+func (h Handler) GetUsers(c *gin.Context) {
 
 	currentUser, isCurrentUserExist := utils.GetCurrentUsername(c)
 
@@ -147,6 +147,148 @@ func (h UserHandler) GetUsers(c *gin.Context) {
 			total,
 			totalPageInt.Int64(),
 			user,
+		),
+	)
+}
+
+func (h Handler) GetMemberInRoom(c *gin.Context) {
+
+	ctx, isSuccess := utils.PrepareContext(c)
+
+	if !isSuccess {
+		return
+	}
+
+	var currentUserModel = model.Users{}
+	var currentUsername = utils.GetCurrentUsernameFromContextForInsertOrUpdateDataInDb(ctx)
+
+	h.DB.WithContext(ctx).Preload("Rooms").Where(
+		model.Users{
+			Username: currentUsername,
+			BaseEntity: model.BaseEntity{
+				Active: utils.GetPointerOfAnyValue(true),
+			},
+		},
+	).Find(&currentUserModel)
+
+	if currentUserModel.BaseEntity.Id == 0 {
+		c.AbortWithStatusJSON(
+			http.StatusNotFound,
+			utils.ReturnResponse(
+				c,
+				constant.UserNotExisted,
+				nil,
+				"We can not determine who are you in the current session",
+			),
+		)
+		return
+	}
+
+	var allActiveMemberInRoom = make([]model.Users, 0)
+
+	h.DB.WithContext(ctx).Preload("Rooms").Where(
+		h.DB.Where(
+			model.Users{
+				BaseEntity: model.BaseEntity{
+					Active: utils.GetPointerOfAnyValue(true),
+				},
+				RoomsID: currentUserModel.RoomsID,
+			},
+		).Where("id not in (?)", currentUserModel.BaseEntity.Id),
+	).Find(&allActiveMemberInRoom)
+
+	c.JSON(
+		http.StatusOK,
+		utils.ReturnResponse(
+			c,
+			constant.Success,
+			allActiveMemberInRoom,
+		),
+	)
+}
+
+func (h Handler) GetMemberInASpecificRoomCode(c *gin.Context) {
+
+	ctx, isSuccess := utils.PrepareContext(c)
+
+	if !isSuccess {
+		return
+	}
+
+	requestPayload := payload.GetMemberInARoomRequestBody{}
+	if err := c.ShouldBindJSON(&requestPayload); err != nil {
+		c.AbortWithStatusJSON(
+			http.StatusBadRequest,
+			utils.ReturnResponse(
+				c,
+				constant.JsonBindingError,
+				nil,
+				err.Error(),
+			),
+		)
+		return
+	}
+
+	var currentUserModel = model.Users{}
+	var currentUsername = utils.GetCurrentUsernameFromContextForInsertOrUpdateDataInDb(ctx)
+
+	h.DB.WithContext(ctx).Where(
+		model.Users{
+			Username: currentUsername,
+			BaseEntity: model.BaseEntity{
+				Active: utils.GetPointerOfAnyValue(true),
+			},
+		},
+	).Find(&currentUserModel)
+
+	if currentUserModel.BaseEntity.Id == 0 {
+		c.AbortWithStatusJSON(
+			http.StatusNotFound,
+			utils.ReturnResponse(
+				c,
+				constant.UserNotExisted,
+				nil,
+				"We can not determine who are you in the current session",
+			),
+		)
+		return
+	}
+
+	roomModelObject := model.Rooms{}
+
+	h.DB.WithContext(ctx).Where(model.Rooms{RoomCode: requestPayload.Request.RoomCode}).Find(&roomModelObject)
+
+	if roomModelObject.BaseEntity.Id == 0 {
+		c.AbortWithStatusJSON(
+			http.StatusNotFound,
+			utils.ReturnResponse(
+				c,
+				constant.RoomDoesNotExist,
+				nil,
+			),
+		)
+		return
+	}
+
+	var allActiveMemberInRoom = make([]model.Users, 0)
+
+	h.DB.WithContext(ctx).Preload("Rooms").Where(
+		h.DB.Where(
+			model.Users{
+				BaseEntity: model.BaseEntity{
+					Active: utils.GetPointerOfAnyValue(true),
+				},
+				RoomsID: roomModelObject.BaseEntity.Id,
+			},
+		).Where("id not in (?)", currentUserModel.BaseEntity.Id),
+	).Find(&allActiveMemberInRoom)
+
+	c.JSON(
+		http.StatusOK,
+		utils.ReturnResponse(
+			c,
+			constant.Success,
+			allActiveMemberInRoom,
 		),
 	)
 }

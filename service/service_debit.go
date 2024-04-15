@@ -19,7 +19,7 @@ type CalculateResult struct {
 	Amount     float64 `json:"amount" gorm:"column:amount;"`
 }
 
-func (h DebitHandler) CalculateDebitOfUser(c *gin.Context) {
+func (h Handler) CalculateDebitOfUser(c *gin.Context) {
 
 	currentUser, isCurrentUserExist := utils.GetCurrentUsername(c)
 
