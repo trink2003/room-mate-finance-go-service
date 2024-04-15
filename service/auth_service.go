@@ -89,7 +89,7 @@ func (h AuthHandler) AddNewUser(ginContext *gin.Context) {
 		UserUid:  uuid.New().String(),
 	}
 
-	if result := SaveNewUser(h.DB, &user, context); result != nil {
+	if result := saveNewUser(h.DB, &user, context); result != nil {
 		ginContext.AbortWithStatusJSON(
 			http.StatusBadRequest,
 			utils.ReturnResponse(
@@ -212,16 +212,21 @@ func (h AuthHandler) Login(ginContext *gin.Context) {
 
 }
 
-func SaveNewUser(db *gorm.DB, user *model.Users, ctx context2.Context) error {
-	user.BaseEntity.Active = utils.GetPointerOfAnyValue(true)
-	user.BaseEntity.UUID = uuid.New().String()
-	user.BaseEntity.CreatedAt = time.Now()
-	user.BaseEntity.UpdatedAt = time.Now()
-	user.BaseEntity.CreatedBy = ctx.Value("username").(string)
-	user.BaseEntity.UpdatedBy = ctx.Value("username").(string)
+func saveNewUser(db *gorm.DB, model *model.Users, ctx context2.Context) error {
+	var currentUsernameInsertOrUpdateData = ""
+	var usernameFromContext = ctx.Value("username")
+	if usernameFromContext != nil {
+		currentUsernameInsertOrUpdateData = usernameFromContext.(string)
+	}
+	model.BaseEntity.Active = utils.GetPointerOfAnyValue(true)
+	model.BaseEntity.UUID = uuid.New().String()
+	model.BaseEntity.CreatedAt = time.Now()
+	model.BaseEntity.UpdatedAt = time.Now()
+	model.BaseEntity.CreatedBy = currentUsernameInsertOrUpdateData
+	model.BaseEntity.UpdatedBy = currentUsernameInsertOrUpdateData
 
 	saveFunc := func(tx *gorm.DB) error {
-		if err := tx.Create(user).Error; err != nil {
+		if err := tx.Create(model).Error; err != nil {
 			// return any error will rollback
 			return err
 		}

@@ -255,7 +255,7 @@ func (h *ExpenseHandler) AddNewExpense(c *gin.Context) {
 
 	expenseTransactionError := h.DB.WithContext(ctx).Transaction(
 		func(tx *gorm.DB) error {
-			if saveNewExpenseErr := SaveNewExpense(tx, &expense, ctx); saveNewExpenseErr.Error != nil {
+			if saveNewExpenseErr := saveNewExpense(tx, &expense, ctx); saveNewExpenseErr.Error != nil {
 				return saveNewExpenseErr.Error
 			}
 			paidAmount, _ := finalEquallyDividedAmount.Float64()
@@ -266,7 +266,7 @@ func (h *ExpenseHandler) AddNewExpense(c *gin.Context) {
 					ListOfExpensesID: expense.BaseEntity.Id,
 					Amount:           paidAmount,
 				}
-				if saveNewDebitUserErr := SaveNewDebitUser(tx, &debitOfCurrentUser, ctx); saveNewDebitUserErr.Error != nil {
+				if saveNewDebitUserErr := saveNewDebitUser(tx, &debitOfCurrentUser, ctx); saveNewDebitUserErr.Error != nil {
 					return saveNewDebitUserErr.Error
 				}
 			}
@@ -757,24 +757,34 @@ func (h *ExpenseHandler) ListExpense(c *gin.Context) {
 	)
 }
 
-func SaveNewExpense(db *gorm.DB, model *model.ListOfExpenses, ctx context.Context) *gorm.DB {
+func saveNewExpense(db *gorm.DB, model *model.ListOfExpenses, ctx context.Context) *gorm.DB {
+	var currentUsernameInsertOrUpdateData = ""
+	var usernameFromContext = ctx.Value("username")
+	if usernameFromContext != nil {
+		currentUsernameInsertOrUpdateData = usernameFromContext.(string)
+	}
 	model.BaseEntity.Active = utils.GetPointerOfAnyValue(true)
 	model.BaseEntity.UUID = uuid.New().String()
 	model.BaseEntity.CreatedAt = time.Now()
 	model.BaseEntity.UpdatedAt = time.Now()
-	model.BaseEntity.CreatedBy = ctx.Value("username").(string)
-	model.BaseEntity.UpdatedBy = ctx.Value("username").(string)
+	model.BaseEntity.CreatedBy = currentUsernameInsertOrUpdateData
+	model.BaseEntity.UpdatedBy = currentUsernameInsertOrUpdateData
 
 	return db.WithContext(ctx).Create(model)
 }
 
-func SaveNewDebitUser(db *gorm.DB, model *model.DebitUser, ctx context.Context) *gorm.DB {
+func saveNewDebitUser(db *gorm.DB, model *model.DebitUser, ctx context.Context) *gorm.DB {
+	var currentUsernameInsertOrUpdateData = ""
+	var usernameFromContext = ctx.Value("username")
+	if usernameFromContext != nil {
+		currentUsernameInsertOrUpdateData = usernameFromContext.(string)
+	}
 	model.BaseEntity.Active = utils.GetPointerOfAnyValue(true)
 	model.BaseEntity.UUID = uuid.New().String()
 	model.BaseEntity.CreatedAt = time.Now()
 	model.BaseEntity.UpdatedAt = time.Now()
-	model.BaseEntity.CreatedBy = ctx.Value("username").(string)
-	model.BaseEntity.UpdatedBy = ctx.Value("username").(string)
+	model.BaseEntity.CreatedBy = currentUsernameInsertOrUpdateData
+	model.BaseEntity.UpdatedBy = currentUsernameInsertOrUpdateData
 
 	return db.WithContext(ctx).Create(model)
 }
