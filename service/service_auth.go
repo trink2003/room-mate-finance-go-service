@@ -2,6 +2,7 @@ package service
 
 import (
 	context2 "context"
+	"errors"
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 	"gorm.io/gorm"
@@ -15,7 +16,13 @@ import (
 
 func (h AuthHandler) AddNewUser(ginContext *gin.Context) {
 
-	context := context2.Background()
+	context, isSuccess := utils.PrepareContext(ginContext)
+
+	if !isSuccess {
+		return
+	}
+
+	var currentUsernameInsertOrUpdateData = utils.GetCurrentUsernameFromContextForInsertOrUpdateDataInDb(context)
 
 	requestPayload := payload.UserRegisterRequestBody{}
 
@@ -31,10 +38,30 @@ func (h AuthHandler) AddNewUser(ginContext *gin.Context) {
 		)
 		return
 	}
-	context = context2.WithValue(context, "username", requestPayload.Request.Username)
-	context = context2.WithValue(context, "traceId", utils.GetTraceId(ginContext))
 
 	var userInDatabase = model.Users{}
+
+	var roomObjectResult = model.Rooms{}
+
+	h.DB.
+		WithContext(context).
+		Where(
+			model.Rooms{
+				RoomCode: requestPayload.Request.RoomCode,
+			},
+		).Find(&roomObjectResult)
+
+	if roomObjectResult.BaseEntity.Id == 0 {
+		ginContext.AbortWithStatusJSON(
+			http.StatusNotFound,
+			utils.ReturnResponse(
+				ginContext,
+				constant.RoomDoesNotExist,
+				nil,
+			),
+		)
+		return
+	}
 
 	userInDatabaseQueryResult := h.
 		DB.
@@ -84,19 +111,83 @@ func (h AuthHandler) AddNewUser(ginContext *gin.Context) {
 	}
 
 	var user = model.Users{
+		BaseEntity: model.BaseEntity{
+			Active:    utils.GetPointerOfAnyValue(true),
+			UUID:      uuid.New().String(),
+			CreatedAt: time.Now(),
+			UpdatedAt: time.Now(),
+			CreatedBy: currentUsernameInsertOrUpdateData,
+			UpdatedBy: currentUsernameInsertOrUpdateData,
+		},
 		Username: requestPayload.Request.Username,
 		Password: requestPayload.Request.Password,
 		UserUid:  uuid.New().String(),
+		RoomsID:  roomObjectResult.BaseEntity.Id,
 	}
 
-	if result := saveNewUser(h.DB, &user, context); result != nil {
+	var errorEnum = constant.Success
+	var transactionResultError = h.DB.WithContext(context).Transaction(func(tx *gorm.DB) error {
+
+		// saveNewUserQueryResult := saveNewUser(h.DB, &user, context)
+		saveNewUserQueryResult := tx.Save(&user)
+		if saveNewUserQueryResult.Error != nil {
+			return saveNewUserQueryResult.Error
+		}
+
+		var roleOfUser model.Roles
+
+		tx.Where(
+			model.Roles{
+				RoleName: "USERS",
+			},
+		).
+			Find(&roleOfUser)
+
+		if roleOfUser.BaseEntity.Id == 0 {
+			errorEnum = constant.RoleNotExist
+			return errors.New(constant.RoleNotExist.ErrorMessage)
+		}
+
+		var saveRoleForUserQueryResult = tx.Save(&model.UsersRoles{
+			BaseEntity: model.BaseEntity{
+				Active:    utils.GetPointerOfAnyValue(true),
+				UUID:      uuid.New().String(),
+				CreatedAt: time.Now(),
+				UpdatedAt: time.Now(),
+				CreatedBy: currentUsernameInsertOrUpdateData,
+				UpdatedBy: currentUsernameInsertOrUpdateData,
+			},
+			UsersId: user.BaseEntity.Id,
+			RolesId: roleOfUser.BaseEntity.Id,
+		})
+
+		if saveRoleForUserQueryResult.Error != nil {
+			return saveRoleForUserQueryResult.Error
+		}
+
+		return nil
+	})
+
+	if transactionResultError != nil {
 		ginContext.AbortWithStatusJSON(
-			http.StatusBadRequest,
+			http.StatusInternalServerError,
 			utils.ReturnResponse(
 				ginContext,
 				constant.QueryError,
 				nil,
-				result.Error(),
+				transactionResultError.Error(),
+			),
+		)
+		return
+	}
+
+	if errorEnum.ErrorCode != 0 {
+		ginContext.AbortWithStatusJSON(
+			http.StatusBadRequest,
+			utils.ReturnResponse(
+				ginContext,
+				errorEnum,
+				nil,
 			),
 		)
 		return
@@ -210,27 +301,4 @@ func (h AuthHandler) Login(ginContext *gin.Context) {
 		),
 	)
 
-}
-
-func saveNewUser(db *gorm.DB, model *model.Users, ctx context2.Context) error {
-	var currentUsernameInsertOrUpdateData = ""
-	var usernameFromContext = ctx.Value("username")
-	if usernameFromContext != nil {
-		currentUsernameInsertOrUpdateData = usernameFromContext.(string)
-	}
-	model.BaseEntity.Active = utils.GetPointerOfAnyValue(true)
-	model.BaseEntity.UUID = uuid.New().String()
-	model.BaseEntity.CreatedAt = time.Now()
-	model.BaseEntity.UpdatedAt = time.Now()
-	model.BaseEntity.CreatedBy = currentUsernameInsertOrUpdateData
-	model.BaseEntity.UpdatedBy = currentUsernameInsertOrUpdateData
-
-	saveFunc := func(tx *gorm.DB) error {
-		if err := tx.Create(model).Error; err != nil {
-			// return any error will rollback
-			return err
-		}
-		return nil
-	}
-	return db.WithContext(ctx).Transaction(saveFunc)
 }

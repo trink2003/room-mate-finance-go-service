@@ -97,4 +97,12 @@ var (
 		ErrorCode:    14,
 		ErrorMessage: "Room does not exist",
 	}
+	RoomStillHavePeople = ErrorEnums{
+		ErrorCode:    15,
+		ErrorMessage: "The room you want to remove still have people live in there",
+	}
+	RoleNotExist = ErrorEnums{
+		ErrorCode:    16,
+		ErrorMessage: "Can not find role for user",
+	}
 )

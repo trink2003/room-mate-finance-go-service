@@ -29,3 +29,12 @@ func PrepareContext(c *gin.Context) (context.Context, bool) {
 
 	return ctx, true
 }
+
+func GetCurrentUsernameFromContextForInsertOrUpdateDataInDb(ctx context.Context) string {
+	var currentUsernameInsertOrUpdateData = ""
+	var usernameFromContext = ctx.Value("username")
+	if usernameFromContext != nil {
+		currentUsernameInsertOrUpdateData = usernameFromContext.(string)
+	}
+	return currentUsernameInsertOrUpdateData
+}

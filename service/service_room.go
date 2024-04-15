@@ -237,6 +237,29 @@ func (h RoomHandler) DeleteRoom(c *gin.Context) {
 
 	var errorEnum = constant.Success
 	var transactionResultError = h.DB.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
+
+		var numberOfMemberInTargetRoom int64
+
+		tx.Raw(
+			`
+			select
+				count(1)
+			from
+				users u
+				left join rooms r on r.id = u.room_id
+			where
+				u.room_id is not null
+				and r.room_code = ?
+			`,
+			requestPayload.Request.RoomCode,
+		).
+			Scan(&numberOfMemberInTargetRoom)
+
+		if numberOfMemberInTargetRoom > 0 {
+			errorEnum = constant.RoomStillHavePeople
+			return nil
+		}
+
 		var roomObjectResult = model.Rooms{}
 
 		var roomQueryResult = tx.WithContext(ctx).
@@ -352,7 +375,7 @@ func (h RoomHandler) EditRoomName(c *gin.Context) {
 
 		roomObjectResult.RoomName = requestPayload.Request.RoomName
 
-		var updateRoomQueryResult = updateRoom(h.DB, &roomObjectResult, ctx)
+		var updateRoomQueryResult = updateRoom(tx, &roomObjectResult, ctx)
 
 		if updateRoomQueryResult.Error != nil {
 			return updateRoomQueryResult.Error
@@ -413,11 +436,7 @@ func saveNewRoom(db *gorm.DB, model *model.Rooms, ctx context.Context) *gorm.DB 
 }
 
 func updateRoom(db *gorm.DB, model *model.Rooms, ctx context.Context) *gorm.DB {
-	var currentUsernameInsertOrUpdateData = ""
-	var usernameFromContext = ctx.Value("username")
-	if usernameFromContext != nil {
-		currentUsernameInsertOrUpdateData = usernameFromContext.(string)
-	}
+	var currentUsernameInsertOrUpdateData = utils.GetCurrentUsernameFromContextForInsertOrUpdateDataInDb(ctx)
 	model.BaseEntity.Active = utils.GetPointerOfAnyValue(true)
 	model.BaseEntity.UpdatedAt = time.Now()
 	model.BaseEntity.UpdatedBy = currentUsernameInsertOrUpdateData

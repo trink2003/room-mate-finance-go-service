@@ -18,7 +18,7 @@ func RegisterRoutes(router *gin.Engine, db *gorm.DB) {
 	router.Use(utils.ResponseLogger)
 
 	authRouter := router.Group("/roommate/api/v1/auth")
-	authRouter.POST("/register", authHandler.AddNewUser)
+	authRouter.POST("/register", utils.AuthenticationWithAuthorization([]string{"ADMIN"}), authHandler.AddNewUser)
 	authRouter.POST("/login", authHandler.Login)
 
 	userRouter := router.Group("/roommate/api/v1/user")
