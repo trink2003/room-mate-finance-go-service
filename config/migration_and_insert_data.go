@@ -38,6 +38,21 @@ func MigrationAndInsertDate(db *gorm.DB) {
 func InsertData(db *gorm.DB) {
 	pass, _ := utils.EncryptPassword("admin")
 
+	var room = model.Rooms{
+		BaseEntity: model.BaseEntity{
+			Active:    utils.GetPointerOfAnyValue(true),
+			UUID:      uuid.New().String(),
+			CreatedAt: time.Now(),
+			UpdatedAt: time.Now(),
+			CreatedBy: "system",
+			UpdatedBy: "system",
+		},
+		RoomCode: "ADMIN_ROOM",
+		RoomName: "Default room for administrator user",
+	}
+
+	db.Save(&room)
+
 	adminUser := model.Users{
 		BaseEntity: model.BaseEntity{
 			Active:    utils.GetPointerOfAnyValue(true),
@@ -50,6 +65,7 @@ func InsertData(db *gorm.DB) {
 		Username: "admin",
 		Password: pass,
 		UserUid:  uuid.New().String(),
+		RoomsID:  room.BaseEntity.Id,
 	}
 
 	db.Create(&adminUser)

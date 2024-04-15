@@ -105,4 +105,8 @@ var (
 		ErrorCode:    16,
 		ErrorMessage: "Can not find role for user",
 	}
+	DeleteDefaultRoomError = ErrorEnums{
+		ErrorCode:    17,
+		ErrorMessage: "Can not delete default room",
+	}
 )

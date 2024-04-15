@@ -235,6 +235,18 @@ func (h RoomHandler) DeleteRoom(c *gin.Context) {
 		return
 	}
 
+	if requestPayload.Request.RoomCode == "ADMIN_ROOM" {
+		c.AbortWithStatusJSON(
+			http.StatusBadRequest,
+			utils.ReturnResponse(
+				c,
+				constant.DeleteDefaultRoomError,
+				nil,
+			),
+		)
+		return
+	}
+
 	var errorEnum = constant.Success
 	var transactionResultError = h.DB.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
 
