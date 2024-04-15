@@ -228,9 +228,9 @@ func (h Handler) GetMemberInASpecificRoomCode(c *gin.Context) {
 		)
 		return
 	}
+	var currentUsername = utils.GetCurrentUsernameFromContextForInsertOrUpdateDataInDb(ctx)
 
 	var currentUserModel = model.Users{}
-	var currentUsername = utils.GetCurrentUsernameFromContextForInsertOrUpdateDataInDb(ctx)
 
 	h.DB.WithContext(ctx).Where(
 		model.Users{

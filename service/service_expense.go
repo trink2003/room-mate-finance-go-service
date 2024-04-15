@@ -421,6 +421,30 @@ func (h Handler) SoftRemoveExpense(c *gin.Context) {
 		return
 	}
 
+	var currentUserModel = model.Users{}
+
+	h.DB.WithContext(ctx).Preload("Rooms").Where(
+		model.Users{
+			Username: *currentUser,
+			BaseEntity: model.BaseEntity{
+				Active: utils.GetPointerOfAnyValue(true),
+			},
+		},
+	).Find(&currentUserModel)
+
+	if currentUserModel.BaseEntity.Id == 0 {
+		c.AbortWithStatusJSON(
+			http.StatusNotFound,
+			utils.ReturnResponse(
+				c,
+				constant.UserNotExisted,
+				nil,
+				"We can not determine who are you in the current session",
+			),
+		)
+		return
+	}
+
 	requestPayload := payload.RemoveExpenseBody{}
 	if err := c.ShouldBindJSON(&requestPayload); err != nil {
 		c.AbortWithStatusJSON(
@@ -447,6 +471,10 @@ func (h Handler) SoftRemoveExpense(c *gin.Context) {
 				BaseEntity: model.BaseEntity{
 					Id:     requestPayload.Request,
 					Active: utils.GetPointerOfAnyValue(true),
+				},
+				BoughtByUserID: currentUserModel.BaseEntity.Id,
+				Users: model.Users{
+					RoomsID: currentUserModel.Rooms.BaseEntity.Id,
 				},
 			},
 		).Find(&expense)
@@ -559,6 +587,30 @@ func (h Handler) ActiveRemoveExpense(c *gin.Context) {
 
 	var errorEnum = constant.ErrorEnums{}
 
+	var currentUserModel = model.Users{}
+
+	h.DB.WithContext(ctx).Preload("Rooms").Where(
+		model.Users{
+			Username: *currentUser,
+			BaseEntity: model.BaseEntity{
+				Active: utils.GetPointerOfAnyValue(true),
+			},
+		},
+	).Find(&currentUserModel)
+
+	if currentUserModel.BaseEntity.Id == 0 {
+		c.AbortWithStatusJSON(
+			http.StatusNotFound,
+			utils.ReturnResponse(
+				c,
+				constant.UserNotExisted,
+				nil,
+				"We can not determine who are you in the current session",
+			),
+		)
+		return
+	}
+
 	transactionResult := h.DB.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
 
 		var expense model.ListOfExpenses
@@ -569,6 +621,10 @@ func (h Handler) ActiveRemoveExpense(c *gin.Context) {
 				BaseEntity: model.BaseEntity{
 					Id:     requestPayload.Request,
 					Active: utils.GetPointerOfAnyValue(false),
+				},
+				BoughtByUserID: currentUserModel.BaseEntity.Id,
+				Users: model.Users{
+					RoomsID: currentUserModel.Rooms.BaseEntity.Id,
 				},
 			},
 		).Find(&expense)
