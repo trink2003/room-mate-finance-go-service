@@ -6,6 +6,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 	"gorm.io/gorm"
+	"gorm.io/gorm/clause"
 	"math/big"
 	"net/http"
 	"room-mate-finance-go-service/constant"
@@ -213,6 +214,188 @@ func (h RoomHandler) GetListOfRooms(c *gin.Context) {
 	)
 }
 
+func (h RoomHandler) DeleteRoom(c *gin.Context) {
+	ctx, isSuccess := utils.PrepareContext(c)
+
+	if !isSuccess {
+		return
+	}
+
+	requestPayload := payload.DeleteRoomRequestBody{}
+	if err := c.ShouldBindJSON(&requestPayload); err != nil {
+		c.AbortWithStatusJSON(
+			http.StatusBadRequest,
+			utils.ReturnResponse(
+				c,
+				constant.JsonBindingError,
+				nil,
+				err.Error(),
+			),
+		)
+		return
+	}
+
+	var errorEnum = constant.Success
+	var transactionResultError = h.DB.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
+		var roomObjectResult = model.Rooms{}
+
+		var roomQueryResult = tx.WithContext(ctx).
+			Clauses(
+				clause.Locking{
+					Strength: clause.LockingStrengthUpdate,
+				},
+			).
+			Where(
+				model.Rooms{
+					RoomCode: requestPayload.Request.RoomCode,
+				},
+			).Find(&roomObjectResult)
+
+		if roomQueryResult.Error != nil {
+			return roomQueryResult.Error
+		}
+
+		if roomObjectResult.BaseEntity.Id == 0 {
+			errorEnum = constant.RoomDoesNotExist
+			return nil
+		}
+
+		var deleteRoomQueryResult = tx.Delete(roomObjectResult)
+
+		if deleteRoomQueryResult.Error != nil {
+			return deleteRoomQueryResult.Error
+		}
+
+		return nil
+	})
+
+	if transactionResultError != nil {
+		c.AbortWithStatusJSON(
+			http.StatusInternalServerError,
+			utils.ReturnResponse(
+				c,
+				constant.QueryError,
+				nil,
+				transactionResultError.Error(),
+			),
+		)
+		return
+	}
+
+	if errorEnum.ErrorCode != 0 {
+		c.AbortWithStatusJSON(
+			http.StatusBadRequest,
+			utils.ReturnResponse(
+				c,
+				errorEnum,
+				nil,
+			),
+		)
+		return
+	}
+
+	c.JSON(
+		http.StatusOK,
+		utils.ReturnResponse(
+			c,
+			constant.Success,
+			"ok",
+		),
+	)
+
+}
+
+func (h RoomHandler) EditRoomName(c *gin.Context) {
+	ctx, isSuccess := utils.PrepareContext(c)
+	if !isSuccess {
+		return
+	}
+
+	requestPayload := payload.EditRoomNameRequestBody{}
+	if err := c.ShouldBindJSON(&requestPayload); err != nil {
+		c.AbortWithStatusJSON(
+			http.StatusBadRequest,
+			utils.ReturnResponse(
+				c,
+				constant.JsonBindingError,
+				nil,
+				err.Error(),
+			),
+		)
+		return
+	}
+
+	var errorEnum = constant.Success
+	var transactionResultError = h.DB.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
+		var roomObjectResult = model.Rooms{}
+
+		var roomQueryResult = tx.WithContext(ctx).
+			/*Clauses(
+				clause.Locking{
+					Strength: clause.LockingStrengthUpdate,
+				},
+			).*/
+			Where(
+				model.Rooms{
+					RoomCode: requestPayload.Request.RoomCode,
+				},
+			).Find(&roomObjectResult)
+
+		if roomQueryResult.Error != nil {
+			return roomQueryResult.Error
+		}
+
+		if roomObjectResult.BaseEntity.Id == 0 {
+			errorEnum = constant.RoomDoesNotExist
+			return nil
+		}
+
+		roomObjectResult.RoomName = requestPayload.Request.RoomName
+
+		var updateRoomQueryResult = updateRoom(h.DB, &roomObjectResult, ctx)
+
+		if updateRoomQueryResult.Error != nil {
+			return updateRoomQueryResult.Error
+		}
+
+		return nil
+	})
+
+	if transactionResultError != nil {
+		c.AbortWithStatusJSON(
+			http.StatusInternalServerError,
+			utils.ReturnResponse(
+				c,
+				constant.QueryError,
+				nil,
+				transactionResultError.Error(),
+			),
+		)
+		return
+	}
+
+	if errorEnum.ErrorCode != 0 {
+		c.AbortWithStatusJSON(
+			http.StatusBadRequest,
+			utils.ReturnResponse(
+				c,
+				errorEnum,
+				nil,
+			),
+		)
+		return
+	}
+
+	c.JSON(
+		http.StatusOK,
+		utils.ReturnResponse(
+			c,
+			constant.Success,
+			"ok",
+		),
+	)
+}
+
 func saveNewRoom(db *gorm.DB, model *model.Rooms, ctx context.Context) *gorm.DB {
 	var currentUsernameInsertOrUpdateData = ""
 	var usernameFromContext = ctx.Value("username")
@@ -227,4 +410,17 @@ func saveNewRoom(db *gorm.DB, model *model.Rooms, ctx context.Context) *gorm.DB 
 	model.BaseEntity.UpdatedBy = currentUsernameInsertOrUpdateData
 
 	return db.WithContext(ctx).Create(model)
+}
+
+func updateRoom(db *gorm.DB, model *model.Rooms, ctx context.Context) *gorm.DB {
+	var currentUsernameInsertOrUpdateData = ""
+	var usernameFromContext = ctx.Value("username")
+	if usernameFromContext != nil {
+		currentUsernameInsertOrUpdateData = usernameFromContext.(string)
+	}
+	model.BaseEntity.Active = utils.GetPointerOfAnyValue(true)
+	model.BaseEntity.UpdatedAt = time.Now()
+	model.BaseEntity.UpdatedBy = currentUsernameInsertOrUpdateData
+
+	return db.WithContext(ctx).Save(model)
 }

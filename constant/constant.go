@@ -93,4 +93,8 @@ var (
 		ErrorCode:    13,
 		ErrorMessage: "Room has been existed",
 	}
+	RoomDoesNotExist = ErrorEnums{
+		ErrorCode:    14,
+		ErrorMessage: "Room does not exist",
+	}
 )
