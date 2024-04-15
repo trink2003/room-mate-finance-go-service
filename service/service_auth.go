@@ -11,7 +11,6 @@ import (
 	"room-mate-finance-go-service/model"
 	"room-mate-finance-go-service/payload"
 	"room-mate-finance-go-service/utils"
-	"time"
 )
 
 func (h AuthHandler) AddNewUser(ginContext *gin.Context) {
@@ -21,8 +20,6 @@ func (h AuthHandler) AddNewUser(ginContext *gin.Context) {
 	if !isSuccess {
 		return
 	}
-
-	var currentUsernameInsertOrUpdateData = utils.GetCurrentUsernameFromContextForInsertOrUpdateDataInDb(context)
 
 	requestPayload := payload.UserRegisterRequestBody{}
 
@@ -111,34 +108,21 @@ func (h AuthHandler) AddNewUser(ginContext *gin.Context) {
 	}
 
 	var user = model.Users{
-		BaseEntity: model.BaseEntity{
-			Active:    utils.GetPointerOfAnyValue(true),
-			UUID:      uuid.New().String(),
-			CreatedAt: time.Now(),
-			UpdatedAt: time.Now(),
-			CreatedBy: currentUsernameInsertOrUpdateData,
-			UpdatedBy: currentUsernameInsertOrUpdateData,
-		},
-		Username: requestPayload.Request.Username,
-		Password: requestPayload.Request.Password,
-		UserUid:  uuid.New().String(),
-		RoomsID:  roomObjectResult.BaseEntity.Id,
+		BaseEntity: utils.GenerateNewBaseEntity(context),
+		Username:   requestPayload.Request.Username,
+		Password:   requestPayload.Request.Password,
+		UserUid:    uuid.New().String(),
+		RoomsID:    roomObjectResult.BaseEntity.Id,
 	}
 
 	var errorEnum = constant.Success
 	var transactionResultError = h.DB.WithContext(context).Transaction(func(tx *gorm.DB) error {
 
-		// saveNewUserQueryResult := saveNewUser(h.DB, &user, context)
-		saveNewUserQueryResult := tx.Save(&user)
-		if saveNewUserQueryResult.Error != nil {
-			return saveNewUserQueryResult.Error
-		}
-
 		var roleOfUser model.Roles
 
 		tx.Where(
 			model.Roles{
-				RoleName: "USERS",
+				RoleName: "USER",
 			},
 		).
 			Find(&roleOfUser)
@@ -148,17 +132,15 @@ func (h AuthHandler) AddNewUser(ginContext *gin.Context) {
 			return errors.New(constant.RoleNotExist.ErrorMessage)
 		}
 
+		saveNewUserQueryResult := tx.Save(&user)
+		if saveNewUserQueryResult.Error != nil {
+			return saveNewUserQueryResult.Error
+		}
+
 		var saveRoleForUserQueryResult = tx.Save(&model.UsersRoles{
-			BaseEntity: model.BaseEntity{
-				Active:    utils.GetPointerOfAnyValue(true),
-				UUID:      uuid.New().String(),
-				CreatedAt: time.Now(),
-				UpdatedAt: time.Now(),
-				CreatedBy: currentUsernameInsertOrUpdateData,
-				UpdatedBy: currentUsernameInsertOrUpdateData,
-			},
-			UsersId: user.BaseEntity.Id,
-			RolesId: roleOfUser.BaseEntity.Id,
+			BaseEntity: utils.GenerateNewBaseEntity(context),
+			UsersId:    user.BaseEntity.Id,
+			RolesId:    roleOfUser.BaseEntity.Id,
 		})
 
 		if saveRoleForUserQueryResult.Error != nil {
