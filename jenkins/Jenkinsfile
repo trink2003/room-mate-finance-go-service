@@ -35,7 +35,7 @@ pipeline {
             steps {
                 script {
                     withCredentials([string(credentialsId: 'tuanloc-docker-credential', variable: 'DOCKER_HUB_PASSWORD')]) { // create a credential as a secret text in jenkins credential page
-                        sh "ssh $SSH_USER@$SSH_HOST -p $SSH_PORT \"cd $TARGET_DIR ; echo \$DOCKER_HUB_PASSWORD | docker login --username tuanloc\""
+                        sh "ssh $SSH_USER@$SSH_HOST -p $SSH_PORT \"cd $TARGET_DIR ; echo \$DOCKER_HUB_PASSWORD | docker login --username tuanloc --password-stdin\""
                     }
                     sh "./service-deploy.sh $images_name $app_name $app_namespace $replica $SSH_USER $SSH_HOST $SSH_PORT $TARGET_DIR"
                     sh "ssh $SSH_USER@$SSH_HOST -p $SSH_PORT \"cd $TARGET_DIR ; docker logout\""
