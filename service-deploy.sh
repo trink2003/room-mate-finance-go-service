@@ -143,7 +143,7 @@ cat <<EOF | cat -
 
 EOF
 
-if eval ${docker_remove_image_command}
+if ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no $ssh_user@$ssh_host -p $ssh_port "cd ${target_dir} ; source ~/.bash_profile ; eval ${docker_remove_image_command}"
 then
 cat <<EOF | cat -
 
