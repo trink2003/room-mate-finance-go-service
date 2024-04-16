@@ -20,12 +20,12 @@ RUN apt install telnet -y && apt install curl -y && apt install vim -y && apt in
 
 # You can stop at this line if you just want to build a pre-built image
 
-WORKDIR /app
+EXPOSE 8080
 
-ADD . .
+ADD ./go-app /go-app
 
-RUN go mod download
+ADD ./icon/favicon.ico /icon/favicon.ico
 
-RUN CGO_ENABLED=0 GOOS=linux go build -o /go-app
+ADD ./permission.json /permission.json
 
 CMD ["/go-app"]
