@@ -55,7 +55,7 @@ func main() {
 
 	service.RegisterRoutes(router, db)
 
-	router.GET("/", func(ctx *gin.Context) {
+	router.GET(constant.BaseApiPath+"/", func(ctx *gin.Context) {
 		ctx.Data(
 			http.StatusOK,
 			constant.ContentTypeHTML,
@@ -74,7 +74,7 @@ func main() {
 		),
 	)
 
-	router.GET("/favicon.ico", func(ctx *gin.Context) {
+	router.GET(constant.BaseApiPath+"/favicon.ico", func(ctx *gin.Context) {
 		ctx.Data(
 			http.StatusOK,
 			"image/x-icon",

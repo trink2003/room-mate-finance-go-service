@@ -5,6 +5,8 @@ type ErrorEnums struct {
 	ErrorMessage string
 }
 
+const BaseApiPath = "/roommate/api/v1"
+
 const DeltaPositive = 0.5
 const DeltaNegative = -0.5
 const YyyyMmDdHhMmSsFormat = "2006-01-02 15:04:05"

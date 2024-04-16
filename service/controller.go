@@ -1,6 +1,7 @@
 package service
 
 import (
+	"room-mate-finance-go-service/constant"
 	"room-mate-finance-go-service/utils"
 
 	"github.com/gin-gonic/gin"
@@ -19,28 +20,26 @@ func RegisterRoutes(router *gin.Engine, db *gorm.DB) {
 	router.Use(utils.RequestLogger)
 	router.Use(utils.ResponseLogger)
 
-	var basePath = "/roommate/api/v1"
-
-	authRouter := router.Group(basePath + "/auth")
+	authRouter := router.Group(constant.BaseApiPath + "/auth")
 	authRouter.POST("/register", utils.AuthenticationWithAuthorization([]string{AdminRole}), handler.AddNewUser)
 	authRouter.POST("/login", handler.Login)
 
-	userRouter := router.Group(basePath + "/user")
+	userRouter := router.Group(constant.BaseApiPath + "/user")
 	userRouter.POST("/get_all_active_user", utils.AuthenticationWithAuthorization([]string{AdminRole}), handler.GetUsers)
 	userRouter.POST("/get_member_in_room", utils.AuthenticationWithAuthorization([]string{UserRole}), handler.GetMemberInRoom)
 	userRouter.POST("/get_member_in_a_specific_room_code", utils.AuthenticationWithAuthorization([]string{AdminRole}), handler.GetMemberInASpecificRoomCode)
 
-	expenseRouter := router.Group(basePath + "/expense")
+	expenseRouter := router.Group(constant.BaseApiPath + "/expense")
 	expenseRouter.POST("/create_new_expense", utils.AuthenticationWithAuthorization([]string{UserRole}), handler.AddNewExpense)
 	expenseRouter.POST("/get_list_of_expense", utils.AuthenticationWithAuthorization([]string{AdminRole, UserRole}), handler.ListExpense)
 	expenseRouter.POST("/remove_expense", utils.AuthenticationWithAuthorization([]string{AdminRole}), handler.RemoveExpense)
 	expenseRouter.POST("/soft_remove_expense", utils.AuthenticationWithAuthorization([]string{UserRole}), handler.SoftRemoveExpense)
 	expenseRouter.POST("/active_expense", utils.AuthenticationWithAuthorization([]string{UserRole}), handler.ActiveRemoveExpense)
 
-	debitRouter := router.Group(basePath + "/debit")
+	debitRouter := router.Group(constant.BaseApiPath + "/debit")
 	debitRouter.POST("/calculate", utils.AuthenticationWithAuthorization([]string{UserRole}), handler.CalculateDebitOfUser)
 
-	roomRouter := router.Group(basePath + "/room")
+	roomRouter := router.Group(constant.BaseApiPath + "/room")
 	roomRouter.POST("/add_new_room", utils.AuthenticationWithAuthorization([]string{AdminRole}), handler.AddNewRoom)
 	roomRouter.POST("/get_list_of_rooms", utils.AuthenticationWithAuthorization([]string{AdminRole}), handler.GetListOfRooms)
 	roomRouter.POST("/delete_room", utils.AuthenticationWithAuthorization([]string{AdminRole}), handler.DeleteRoom)
