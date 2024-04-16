@@ -1,5 +1,16 @@
 package constant
 
+type LogLevelType string
+
+const (
+	Info  LogLevelType = "INFO"
+	Warn  LogLevelType = "WARN"
+	Error LogLevelType = "ERROR"
+	// Debug LogLevelType = "DEBUG"
+	// Trace LogLevelType = "TRACE"
+
+)
+
 type ErrorEnums struct {
 	ErrorCode    int
 	ErrorMessage string
