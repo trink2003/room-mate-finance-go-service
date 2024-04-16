@@ -70,27 +70,6 @@ cat <<EOF | cat -
 EOF
 eval ${go_build_command}
 
-# -----------------
-docker_build_command="docker build -f ./Dockerfile -t ${images_name}:${images_tag} ."
-cat <<EOF | cat -
-
-
->> Building image with Docker
->> Command: ${docker_build_command}
-
-EOF
-eval ${docker_build_command}
-docker_push_command="docker push ${images_name}:${images_tag}"
-cat <<EOF | cat -
-
-
->> Pushing images to image registry
->> Command: ${docker_push_command}
-
-EOF
-eval ${docker_push_command}
-# -----------------
-
 cat <<EOF | cat -
 
 
@@ -117,6 +96,31 @@ cat <<EOF | cat -
 EOF
 # ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no $ssh_user@$ssh_host -p $ssh_port "eval \"mkdir -p ${target_dir}\""
 scp -P $ssh_port -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no -pr ./helm/ $ssh_user@$ssh_host:$target_dir
+scp -P $ssh_port -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no -pr ./icon/ $ssh_user@$ssh_host:$target_dir
+scp -P $ssh_port -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no -p ./Dockerfile $ssh_user@$ssh_host:$target_dir
+scp -P $ssh_port -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no -p ./permission.json $ssh_user@$ssh_host:$target_dir
+scp -P $ssh_port -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no -p ./go_app $ssh_user@$ssh_host:$target_dir
+
+# -----------------
+docker_build_command="docker build -f ./Dockerfile -t ${images_name}:${images_tag} ."
+cat <<EOF | cat -
+
+
+>> Building image with Docker
+>> Command: ${docker_build_command}
+
+EOF
+ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no $ssh_user@$ssh_host -p $ssh_port "cd ${target_dir} ; source ~/.bash_profile ; eval ${docker_build_command}"
+docker_push_command="docker push ${images_name}:${images_tag}"
+cat <<EOF | cat -
+
+
+>> Pushing images to image registry
+>> Command: ${docker_push_command}
+
+EOF
+ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no $ssh_user@$ssh_host -p $ssh_port "cd ${target_dir} ; source ~/.bash_profile ; eval ${docker_push_command}"
+# -----------------
 
 helm_upgrade_command="helm upgrade -i --force --set image.name=${images_name},image.tag=${images_tag},replica=${replica},port=6060 ${app_name} -n ${app_namespace} --create-namespace ./helm"
 cat <<EOF | cat -
