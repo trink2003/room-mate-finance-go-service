@@ -1,0 +1,42 @@
+def images_name = 'tuanloc/room-mate-finance'
+def app_name = 'room-mate-finance'
+def app_namespace = 'service'
+def replica = 2
+
+pipeline {
+    agent any
+    tools {
+        go "1.22.2"
+    }
+    environment {
+        GIT_CREDENTIALS_ID = 'tuanloc-github'
+        APPLICATION_GIT_BRANCH = 'master'
+        APPLICATION_GIT_REPOSITRY = 'https://github.com/tuanloc1105/room-mate-finance-go-service.git'
+        SSH_USER='ae403'
+        SSH_HOST='192.168.1.22'
+        SSH_PORT='22'
+        TARGET_DIR='/home/ae403/service/room-mate-finance'
+    }
+    stages {
+        stage('Checkout source') {
+            steps {
+                script {
+                    def checkoutDetails = checkout([
+                        $class: 'GitSCM',
+                        branches: [[ name: ('*/' + APPLICATION_GIT_BRANCH) ]],
+                        doGenerateSubmoduleConfigurations: false,
+                        submoduleCfg: [],
+                        userRemoteConfigs: [[ credentialsId: GIT_CREDENTIALS_ID, url: APPLICATION_GIT_REPOSITRY ]]
+                    ])
+                }
+            }
+        }
+        stage('Deploy source') {
+            steps {
+                script {
+                    sh "./service-deploy.sh $images_name $app_name $app_namespace $replica $SSH_USER $SSH_HOST $SSH_PORT $TARGET_DIR"
+                }
+            }
+        }
+    }
+}
