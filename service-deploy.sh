@@ -104,9 +104,9 @@ description: A Helm chart for Kubernetes to deploy the room-mate-finance-go-serv
 
 type: application
 
-version: ${current_time}
+version: 1.0.0
 
-appVersion: latest
+appVersion: ${images_tag}
 EOF
 
 cat <<EOF | cat -
