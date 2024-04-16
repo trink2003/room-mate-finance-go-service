@@ -238,6 +238,7 @@ func Authentication(c *gin.Context) {
 
 func AuthenticationWithAuthorization(listOfRole []string) func(c *gin.Context) {
 	return func(c *gin.Context) {
+		CheckAndSetTraceId(c)
 		traceId := GetTraceId(c)
 		ctx := context.Background()
 		ctx = context.WithValue(ctx, "traceId", traceId)
@@ -257,12 +258,13 @@ func AuthenticationWithAuthorization(listOfRole []string) func(c *gin.Context) {
 			})
 			return
 		}
+		currentUsername := mapClaims["sub"].(string)
 		c.Set("auth", mapClaims)
 		log.Info(
 			fmt.Sprintf(
 				constant.LogPattern,
 				traceId,
-				"",
+				currentUsername,
 				fmt.Sprintf("Check permission for url: %v", c.Request.RequestURI),
 			),
 		)
@@ -277,7 +279,7 @@ func AuthenticationWithAuthorization(listOfRole []string) func(c *gin.Context) {
 				fmt.Sprintf(
 					constant.LogPattern,
 					traceId,
-					"",
+					currentUsername,
 					fmt.Sprintf(
 						"\n\t- this user has role: %v\n\t- current api require user with role: %v",
 						roleListInterface,
