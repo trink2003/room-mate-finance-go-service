@@ -28,7 +28,8 @@ exit 1
 fi
 
 # lastest_git_commit_hash_id=$(git log --branches --format="%H" -n 1) # this command will get full hash commit id
-lastest_git_commit_hash_id=$(git log --branches --format="%h" -n 1) # this command will get short hash commit id
+# lastest_git_commit_hash_id=$(git log --branches --format="%h" -n 1) # this command will get short hash commit id
+lastest_git_commit_hash_id=$(git log -n 1 --pretty=format:'%h')
 
 
 images_name="$1"
