@@ -22,10 +22,10 @@ RUN apt install telnet -y && apt install curl -y && apt install vim -y && apt in
 
 EXPOSE 8080
 
-ADD ./go-app /go-app
+ADD ./go_app /go_app
 
 ADD ./icon/favicon.ico /icon/favicon.ico
 
 ADD ./permission.json /permission.json
 
-CMD ["/go-app"]
+CMD ["/go_app"]

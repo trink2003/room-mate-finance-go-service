@@ -35,7 +35,8 @@ images_name="$1"
 app_name="$2"
 app_namespace="$3"
 replica="$4"
-images_tag="$(date -d "$b 0 min" "+%Y%m%d%H%M%S")_${lastest_git_commit_hash_id}"
+current_time=$(date -d "$b 0 min" "+%Y%m%d%H%M%S")
+images_tag="${current_time}_${lastest_git_commit_hash_id}"
 
 cat <<EOF | cat -
 
@@ -103,7 +104,7 @@ description: A Helm chart for Kubernetes to deploy the room-mate-finance-go-serv
 
 type: application
 
-version: ${images_tag}
+version: ${current_time}
 
 appVersion: latest
 EOF
