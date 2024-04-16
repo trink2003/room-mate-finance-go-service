@@ -204,7 +204,7 @@ version: 0.1.0
 appVersion: latest
 EOF
 
-ecat <<EOF | cat -
+cat <<EOF | cat -
 
 
 >> Deployment process has been done
