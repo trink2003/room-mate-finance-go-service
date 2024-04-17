@@ -10,7 +10,7 @@ import (
 	"strings"
 )
 
-func Log(level constant.LogLevelType, ctx context.Context, content string) {
+func WithLevel(level constant.LogLevelType, ctx context.Context, content string) {
 	usernameFromContext := ctx.Value("username")
 	traceIdFromContext := ctx.Value("traceId")
 	username := ""
