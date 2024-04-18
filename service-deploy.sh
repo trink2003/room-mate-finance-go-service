@@ -92,6 +92,18 @@ EOF
 cat <<EOF | cat -
 
 
+>> Update helm chart note
+
+EOF
+git_commit_message_and_commit_id=$(git log -1)
+
+cat <<EOF | cat - | tee ./helm/templates/NOTES.txt
+${git_commit_message_and_commit_id}
+EOF
+
+cat <<EOF | cat -
+
+
 >> Uploading necessary file to target host $ssh_host
 
 EOF
@@ -203,6 +215,8 @@ version: 0.1.0
 
 appVersion: latest
 EOF
+
+rm -f ./helm/templates/NOTES.txt
 
 cat <<EOF | cat -
 
