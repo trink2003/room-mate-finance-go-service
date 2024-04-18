@@ -10,7 +10,7 @@ pipeline {
     }
     environment {
         GIT_CREDENTIALS_ID = 'tuanloc-github'
-        APPLICATION_GIT_BRANCH = 'master'
+        APPLICATION_GIT_BRANCH = '*/master'
         APPLICATION_GIT_REPOSITRY = 'https://github.com/tuanloc1105/room-mate-finance-go-service.git'
         SSH_USER='ae403'
         SSH_HOST='192.168.1.22'
@@ -21,13 +21,14 @@ pipeline {
         stage('Checkout source') {
             steps {
                 script {
-                    def checkoutDetails = checkout([
-                        $class: 'GitSCM',
-                        branches: [[ name: ('*/' + APPLICATION_GIT_BRANCH) ]],
-                        doGenerateSubmoduleConfigurations: false,
-                        submoduleCfg: [],
-                        userRemoteConfigs: [[ credentialsId: GIT_CREDENTIALS_ID, url: APPLICATION_GIT_REPOSITRY ]]
-                    ])
+                    def checkoutDetails = checkout scmGit(
+                        branches: [[name: APPLICATION_GIT_BRANCH]],
+                        extensions: [],
+                        userRemoteConfigs: [
+                            [credentialsId: GIT_CREDENTIALS_ID, url: APPLICATION_GIT_REPOSITRY]
+                        ]
+                    )
+                    sh "echo $checkoutDetails"
                 }
             }
         }
