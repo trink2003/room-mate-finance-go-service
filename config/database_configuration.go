@@ -97,8 +97,12 @@ func InitDatabaseConnection() (db *gorm.DB, err error) {
 	// sets the maximum amount of time a connection may be reused.
 	sqlDB.SetConnMaxLifetime(time.Hour)
 
-	// MigrationAndInsertDate(db)
-	// InsertData(db)
+	if isDatabaseMigration, isDatabaseMigrationExist := os.LookupEnv("DATABASE_MIGRATION"); isDatabaseMigration == "true" && isDatabaseMigrationExist {
+		MigrationAndInsertDate(db)
+	}
+	if isDatabaseInitializationData, isDatabaseInitializationDataExist := os.LookupEnv("DATABASE_INITIALIZATION_DATA"); isDatabaseInitializationData == "true" && isDatabaseInitializationDataExist {
+		InsertData(db)
+	}
 
 	return db, err
 }

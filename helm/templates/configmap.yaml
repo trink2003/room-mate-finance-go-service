@@ -9,3 +9,5 @@ data:
   database_port: {{ .Values.database_port | quote }}
   database_name: {{ .Values.database_name | quote }}
   jwt_expire_time: {{ int64 .Values.jwt_expire_time | quote }}
+  database_migration: {{ .Values.database_migration | quote }}
+  database_initialization_data: {{ .Values.database_initialization_data | quote }}

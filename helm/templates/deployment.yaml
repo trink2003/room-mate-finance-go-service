@@ -46,6 +46,16 @@ spec:
                 configMapKeyRef:
                   name: {{ .Release.Name }}-cf
                   key: jwt_expire_time
+            - name: DATABASE_MIGRATION
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ .Release.Name }}-cf
+                  key: database_migration
+            - name: DATABASE_INITIALIZATION_DATA
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ .Release.Name }}-cf
+                  key: database_initialization_data
             - name: DATABASE_PASSWORD
               valueFrom:
                 secretKeyRef:
