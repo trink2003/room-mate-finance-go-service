@@ -31,7 +31,7 @@ func ByteJsonToStruct[T any](jsonString []byte, anyStruct *T) {
 func SortMapToString(inputMap map[string]string) string {
 	result := ""
 
-	if inputMap == nil || len(inputMap) == 0 {
+	if inputMap == nil || len(inputMap) < 1 {
 		return result
 	}
 

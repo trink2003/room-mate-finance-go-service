@@ -33,7 +33,7 @@ func ConsumeApi(
 		traceId = traceIdFromContext.(string)
 	}
 
-	if slices.Contains(constant.ValidMethod, method) == false {
+	if !slices.Contains(constant.ValidMethod, method) {
 		return "", errors.New("invalid method")
 	}
 	var client *http.Client
@@ -84,7 +84,7 @@ func ConsumeApi(
 	defer func(Body io.ReadCloser) {
 		err := Body.Close()
 		if err != nil {
-
+			fmt.Printf("%v", err.Error())
 		}
 	}(res.Body)
 

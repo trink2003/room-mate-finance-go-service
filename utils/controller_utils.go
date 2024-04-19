@@ -7,8 +7,6 @@ import (
 	"fmt"
 	"io"
 	"net/http"
-	"os"
-	"path/filepath"
 	"room-mate-finance-go-service/constant"
 	"room-mate-finance-go-service/log"
 	"room-mate-finance-go-service/payload"
@@ -175,7 +173,7 @@ func AuthenticationWithAuthorization(listOfRole []string) func(c *gin.Context) {
 			ctx,
 			fmt.Sprintf("Check permission for url: %v", c.Request.RequestURI),
 		)
-		if listOfRole == nil || len(listOfRole) == 0 {
+		if listOfRole == nil || len(listOfRole) < 1 {
 			c.Next()
 			return
 		}
@@ -203,7 +201,6 @@ func AuthenticationWithAuthorization(listOfRole []string) func(c *gin.Context) {
 			ErrorCode:    constant.Forbidden.ErrorCode,
 			ErrorMessage: constant.Forbidden.ErrorMessage,
 		})
-		return
 	}
 }
 
@@ -244,31 +241,31 @@ func ReturnPageResponse(
 	}
 }
 
-func readPermissionJsonFile() *[]Permission {
-	var result []Permission
-	filePath := filepath.Join(GetCurrentDirectory(), "permission.json")
-	// log.Printf(filePath)
-	jsonFile, err := os.Open(filePath)
-	if err != nil {
-		// log.Printf(err.Error())
-		return &result
-	}
+// func readPermissionJsonFile() *[]Permission {
+// 	var result []Permission
+// 	filePath := filepath.Join(GetCurrentDirectory(), "permission.json")
+// 	// log.Printf(filePath)
+// 	jsonFile, err := os.Open(filePath)
+// 	if err != nil {
+// 		// log.Printf(err.Error())
+// 		return &result
+// 	}
 
-	defer func(jsonFile *os.File) {
-		deferErr := jsonFile.Close()
-		if deferErr != nil {
-			// log.Printf(deferErr.Error())
-			panic(deferErr)
-		}
-	}(jsonFile)
-	byteValue, readAllErr := io.ReadAll(jsonFile)
-	if readAllErr != nil {
-		// log.Printf(readAllErr.Error())
-		return &result
-	}
-	// log.Printf(string(byteValue))
-	ByteJsonToStruct(byteValue, &result)
+// 	defer func(jsonFile *os.File) {
+// 		deferErr := jsonFile.Close()
+// 		if deferErr != nil {
+// 			// log.Printf(deferErr.Error())
+// 			panic(deferErr)
+// 		}
+// 	}(jsonFile)
+// 	byteValue, readAllErr := io.ReadAll(jsonFile)
+// 	if readAllErr != nil {
+// 		// log.Printf(readAllErr.Error())
+// 		return &result
+// 	}
+// 	// log.Printf(string(byteValue))
+// 	ByteJsonToStruct(byteValue, &result)
 
-	return &result
+// 	return &result
 
-}
+// }
