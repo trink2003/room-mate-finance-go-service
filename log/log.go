@@ -3,12 +3,13 @@ package log
 import (
 	"context"
 	"fmt"
-	"github.com/charmbracelet/log"
 	"os"
 	"room-mate-finance-go-service/constant"
 	"room-mate-finance-go-service/utils/splunk/v2"
 	"strings"
 	"time"
+
+	"github.com/charmbracelet/log"
 )
 
 func WithLevel(level constant.LogLevelType, ctx context.Context, content string) {
