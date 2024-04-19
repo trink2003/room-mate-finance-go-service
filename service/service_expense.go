@@ -3,7 +3,6 @@ package service
 import (
 	"context"
 	"fmt"
-	"github.com/google/uuid"
 	"math/big"
 	"net/http"
 	"room-mate-finance-go-service/constant"
@@ -13,6 +12,8 @@ import (
 	"slices"
 	"strconv"
 	"time"
+
+	"github.com/google/uuid"
 
 	"github.com/charmbracelet/log"
 	"github.com/gin-gonic/gin"

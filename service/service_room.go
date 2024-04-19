@@ -3,10 +3,6 @@ package service
 import (
 	"context"
 	"fmt"
-	"github.com/gin-gonic/gin"
-	"github.com/google/uuid"
-	"gorm.io/gorm"
-	"gorm.io/gorm/clause"
 	"math/big"
 	"net/http"
 	"room-mate-finance-go-service/constant"
@@ -14,6 +10,11 @@ import (
 	"room-mate-finance-go-service/payload"
 	"room-mate-finance-go-service/utils"
 	"time"
+
+	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
+	"gorm.io/gorm"
+	"gorm.io/gorm/clause"
 )
 
 func (h Handler) AddNewRoom(c *gin.Context) {

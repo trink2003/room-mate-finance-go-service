@@ -1,11 +1,12 @@
 package config
 
 import (
-	"github.com/google/uuid"
-	"gorm.io/gorm"
 	"room-mate-finance-go-service/model"
 	"room-mate-finance-go-service/utils"
 	"time"
+
+	"github.com/google/uuid"
+	"gorm.io/gorm"
 )
 
 func MigrationAndInsertDate(db *gorm.DB) {

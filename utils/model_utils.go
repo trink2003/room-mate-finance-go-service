@@ -2,9 +2,10 @@ package utils
 
 import (
 	"context"
-	"github.com/google/uuid"
 	"room-mate-finance-go-service/model"
 	"time"
+
+	"github.com/google/uuid"
 )
 
 func GenerateNewBaseEntity(ctx context.Context) model.BaseEntity {

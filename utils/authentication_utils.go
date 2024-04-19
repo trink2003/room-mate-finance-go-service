@@ -4,14 +4,15 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"github.com/charmbracelet/log"
-	"github.com/gin-gonic/gin"
-	"github.com/golang-jwt/jwt/v5"
-	"golang.org/x/crypto/bcrypt"
 	"os"
 	"room-mate-finance-go-service/constant"
 	"strconv"
 	"time"
+
+	"github.com/charmbracelet/log"
+	"github.com/gin-gonic/gin"
+	"github.com/golang-jwt/jwt/v5"
+	"golang.org/x/crypto/bcrypt"
 )
 
 func EncryptPassword(password string) (encryptedPassword string, error error) {

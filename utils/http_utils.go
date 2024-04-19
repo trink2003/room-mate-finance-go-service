@@ -5,12 +5,13 @@ import (
 	"crypto/tls"
 	"errors"
 	"fmt"
-	"github.com/charmbracelet/log"
 	"io"
 	"net/http"
 	"room-mate-finance-go-service/constant"
 	"slices"
 	"strings"
+
+	"github.com/charmbracelet/log"
 )
 
 func ConsumeApi(

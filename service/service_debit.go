@@ -2,8 +2,6 @@ package service
 
 import (
 	"context"
-	"github.com/gin-gonic/gin"
-	"gorm.io/gorm"
 	"net/http"
 	"room-mate-finance-go-service/constant"
 	"room-mate-finance-go-service/model"
@@ -11,6 +9,9 @@ import (
 	"room-mate-finance-go-service/utils"
 	"time"
 	_ "time/tzdata" // Must import when getting current time with timezone
+
+	"github.com/gin-gonic/gin"
+	"gorm.io/gorm"
 )
 
 type CalculateResult struct {

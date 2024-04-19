@@ -1,10 +1,11 @@
 package utils
 
 import (
-	"github.com/gin-gonic/gin"
-	"github.com/google/uuid"
 	"math/big"
 	"room-mate-finance-go-service/constant"
+
+	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
 )
 
 func CheckAndSetTraceId(c *gin.Context) {

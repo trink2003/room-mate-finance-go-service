@@ -2,14 +2,15 @@ package service
 
 import (
 	"context"
-	"github.com/gin-gonic/gin"
-	"gorm.io/gorm"
 	"math/big"
 	"net/http"
 	"room-mate-finance-go-service/constant"
 	"room-mate-finance-go-service/model"
 	"room-mate-finance-go-service/payload"
 	"room-mate-finance-go-service/utils"
+
+	"github.com/gin-gonic/gin"
+	"gorm.io/gorm"
 )
 
 func (h Handler) GetUsers(c *gin.Context) {

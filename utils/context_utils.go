@@ -2,9 +2,10 @@ package utils
 
 import (
 	"context"
-	"github.com/gin-gonic/gin"
 	"net/http"
 	"room-mate-finance-go-service/constant"
+
+	"github.com/gin-gonic/gin"
 )
 
 func PrepareContext(c *gin.Context) (context.Context, bool) {

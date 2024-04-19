@@ -3,10 +3,11 @@ package utils
 import (
 	"bufio"
 	"fmt"
-	"github.com/charmbracelet/log"
 	"io"
 	"os"
 	"path/filepath"
+
+	"github.com/charmbracelet/log"
 )
 
 func GetCurrentDirectory() string {

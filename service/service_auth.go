@@ -3,14 +3,15 @@ package service
 import (
 	context2 "context"
 	"errors"
-	"github.com/gin-gonic/gin"
-	"github.com/google/uuid"
-	"gorm.io/gorm"
 	"net/http"
 	"room-mate-finance-go-service/constant"
 	"room-mate-finance-go-service/model"
 	"room-mate-finance-go-service/payload"
 	"room-mate-finance-go-service/utils"
+
+	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
+	"gorm.io/gorm"
 )
 
 func (h Handler) AddNewUser(ginContext *gin.Context) {
