@@ -18,6 +18,8 @@ type ErrorEnums struct {
 
 const BaseApiPath = "/roommate/api/v1"
 
+const LogFileFolder = "./service_log/"
+const LogFileLocation = "room_mate_finance_service_log_%d_%d_%d.log"
 const DeltaPositive = 0.5
 const DeltaNegative = -0.5
 const YyyyMmDdHhMmSsFormat = "2006-01-02 15:04:05"

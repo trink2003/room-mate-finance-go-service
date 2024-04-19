@@ -23,11 +23,6 @@ func (h Handler) CalculateDebitOfUser(c *gin.Context) {
 
 	currentUser, isCurrentUserExist := utils.GetCurrentUsername(c)
 
-	ctx := context.Background()
-
-	ctx = context.WithValue(ctx, "username", *currentUser)
-	ctx = context.WithValue(ctx, "traceId", utils.GetTraceId(c))
-
 	if isCurrentUserExist != nil {
 		c.AbortWithStatusJSON(
 			http.StatusUnauthorized,
@@ -40,6 +35,11 @@ func (h Handler) CalculateDebitOfUser(c *gin.Context) {
 		)
 		return
 	}
+
+	ctx := context.Background()
+
+	ctx = context.WithValue(ctx, "username", *currentUser)
+	ctx = context.WithValue(ctx, "traceId", utils.GetTraceId(c))
 	requestPayload := payload.CalculateDebitRequestBody{}
 
 	if err := c.ShouldBindJSON(&requestPayload); err != nil {
