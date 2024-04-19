@@ -1,14 +1,14 @@
 package main
 
 import (
-	"fmt"
-	"github.com/charmbracelet/log"
+	"context"
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	"net/http"
 	"os"
 	"room-mate-finance-go-service/config"
 	"room-mate-finance-go-service/constant"
+	"room-mate-finance-go-service/log"
 	"room-mate-finance-go-service/payload"
 	"room-mate-finance-go-service/service"
 	"room-mate-finance-go-service/utils"
@@ -16,7 +16,7 @@ import (
 )
 
 func main() {
-
+	var ctx = context.Background()
 	router := gin.Default()
 
 	router.NoRoute(
@@ -65,13 +65,10 @@ func main() {
 		)
 	})
 
-	log.Info(
-		fmt.Sprintf(
-			constant.LogPattern,
-			"",
-			"",
-			"Current directory is: "+utils.GetCurrentDirectory(),
-		),
+	log.WithLevel(
+		constant.Info,
+		ctx,
+		"Current directory is: "+utils.GetCurrentDirectory(),
 	)
 
 	router.GET(constant.BaseApiPath+"/favicon.ico", func(ctx *gin.Context) {
@@ -98,14 +95,12 @@ func main() {
 		),
 	)
 
-	log.Info(
-		fmt.Sprintf(
-			constant.LogPattern,
-			"",
-			"",
-			"Application starting",
-		),
+	log.WithLevel(
+		constant.Info,
+		ctx,
+		"Application starting",
 	)
+
 	ginErr := router.Run(":" + applicationPort)
 	if ginErr != nil {
 		panic(ginErr)

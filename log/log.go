@@ -71,7 +71,7 @@ func WithLevel(level constant.LogLevelType, ctx context.Context, content string)
 		}
 	}
 
-	appendLogToFileError := AppendLogToFile(string(level) + " " + message)
+	appendLogToFileError := AppendLogToFile(fmt.Sprintf("%s - %s\n", string(level), message))
 	if appendLogToFileError != nil {
 		log.Error(fmt.Sprintf(
 			constant.LogPattern,

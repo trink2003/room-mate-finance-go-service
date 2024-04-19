@@ -46,16 +46,11 @@ func InitDatabaseConnection() (db *gorm.DB, err error) {
 		constant.Info,
 		ctx,
 		fmt.Sprintf(
-			constant.LogPattern,
-			"",
-			"",
-			fmt.Sprintf(
-				"Database connect info:\n    - databaseHost: %s\n    - databaseUsername: %s\n    - databaseName: %s\n    - databasePort: %s",
-				databaseHost,
-				databaseUsername,
-				databaseName,
-				databasePort,
-			),
+			"Database connect info:\n    - databaseHost: %s\n    - databaseUsername: %s\n    - databaseName: %s\n    - databasePort: %s",
+			databaseHost,
+			databaseUsername,
+			databaseName,
+			databasePort,
 		),
 	)
 	myLog := &dbLogger{}
