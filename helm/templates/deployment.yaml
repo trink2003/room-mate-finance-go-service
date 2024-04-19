@@ -12,8 +12,15 @@ spec:
       labels:
         app: {{ .Release.Name }}
     spec:
+      volumes:
+        - name: logs
+          persistentVolumeClaim:
+            claimName: {{ .Release.Name }}-pvc
       containers:
         - name: {{ .Release.Name }}
+          volumeMounts:
+            - mountPath: /service_log
+              name: logs
           image: "{{ .Values.image.name }}:{{ .Values.image.tag }}"
           imagePullPolicy: IfNotPresent
           ports:
