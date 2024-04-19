@@ -10,12 +10,12 @@ import (
 	"os"
 	"path/filepath"
 	"room-mate-finance-go-service/constant"
+	"room-mate-finance-go-service/log"
 	"room-mate-finance-go-service/payload"
 	"slices"
 	"strconv"
 	"strings"
 
-	"github.com/charmbracelet/log"
 	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt/v5"
 )
@@ -80,13 +80,13 @@ func RequestLogger(c *gin.Context) {
 		claims := claimFromGinContext.(jwt.MapClaims)
 		currentUser = claims["sub"].(string)
 	}
-	log.Info(
-		fmt.Sprintf(
-			constant.LogPattern,
-			GetTraceId(c),
-			currentUser,
-			HideSensitiveJsonField(message),
-		),
+	var ctx = context.Background()
+	ctx = context.WithValue(ctx, constant.UsernameLogKey, currentUser)
+	ctx = context.WithValue(ctx, constant.TraceIdLogKey, GetTraceId(c))
+	log.WithLevel(
+		constant.Info,
+		ctx,
+		HideSensitiveJsonField(message),
 	)
 	c.Next()
 	// latency := time.Since(t)
@@ -134,106 +134,15 @@ func ResponseLogger(c *gin.Context) {
 		claims := claimFromGinContext.(jwt.MapClaims)
 		currentUser = claims["sub"].(string)
 	}
-	log.Info(
-		fmt.Sprintf(
-			constant.LogPattern,
-			GetTraceId(c),
-			currentUser,
-			HideSensitiveJsonField(message),
-		),
+	var ctx = context.Background()
+	ctx = context.WithValue(ctx, constant.UsernameLogKey, currentUser)
+	ctx = context.WithValue(ctx, constant.TraceIdLogKey, GetTraceId(c))
+	log.WithLevel(
+		constant.Info,
+		ctx,
+		HideSensitiveJsonField(message),
 	)
 
-}
-
-func Authentication(c *gin.Context) {
-	traceId := GetTraceId(c)
-	ctx := context.Background()
-	ctx = context.WithValue(ctx, "traceId", traceId)
-	token := c.Request.Header.Get("Authorization")
-	var mapClaims jwt.MapClaims
-	var err error
-	if strings.Contains(token, "Bearer") {
-		mapClaims, err = VerifyJwtToken(ctx, token[7:])
-	} else {
-		mapClaims, err = VerifyJwtToken(ctx, token)
-	}
-	if err != nil {
-		c.AbortWithStatusJSON(http.StatusUnauthorized, &payload.Response{
-			Trace:        traceId,
-			ErrorCode:    constant.Unauthorized.ErrorCode,
-			ErrorMessage: constant.Unauthorized.ErrorMessage,
-		})
-		return
-	}
-	c.Set("auth", mapClaims)
-	permissionList := *readPermissionJsonFile()
-	log.Info(
-		fmt.Sprintf(
-			constant.LogPattern,
-			traceId,
-			"",
-			fmt.Sprintf("Check permission for url: %v", c.Request.RequestURI),
-		),
-	)
-	for _, p := range permissionList {
-		log.Info(
-			fmt.Sprintf(
-				constant.LogPattern,
-				traceId,
-				"",
-				fmt.Sprintf("Current url: %v", p.Url),
-			),
-		)
-		if strings.Compare(strings.ToLower(c.Request.RequestURI), strings.ToLower(p.Url)) == 0 {
-			log.Info(
-				fmt.Sprintf(
-					constant.LogPattern,
-					traceId,
-					"",
-					fmt.Sprintf("This api is accessable with role: %v", p.Role),
-				),
-			)
-			if slices.Contains(p.Role, "*") {
-				c.Next()
-				return
-			}
-			userRole := mapClaims["aud"]
-			if userRole != nil {
-
-				roleList := userRole.([]interface{})
-				log.Info(
-					fmt.Sprintf(
-						constant.LogPattern,
-						traceId,
-						"",
-						fmt.Sprintf("This user have role: %v", roleList),
-					),
-				)
-				for _, rI := range roleList {
-					if slices.Contains(p.Role, fmt.Sprintf("%v", rI)) {
-						c.Next()
-						return
-					}
-				}
-				// fmt.Printf("\n\n%s - %T\n\n", userRole, userRole)
-			}
-		} else {
-			log.Info(
-				fmt.Sprintf(
-					constant.LogPattern,
-					traceId,
-					"",
-					"Not match",
-				),
-			)
-		}
-	}
-	c.AbortWithStatusJSON(http.StatusForbidden, &payload.Response{
-		Trace:        traceId,
-		ErrorCode:    constant.Forbidden.ErrorCode,
-		ErrorMessage: constant.Forbidden.ErrorMessage,
-	})
-	return
 }
 
 func AuthenticationWithAuthorization(listOfRole []string) func(c *gin.Context) {
@@ -241,16 +150,16 @@ func AuthenticationWithAuthorization(listOfRole []string) func(c *gin.Context) {
 		CheckAndSetTraceId(c)
 		traceId := GetTraceId(c)
 		ctx := context.Background()
-		ctx = context.WithValue(ctx, "traceId", traceId)
+		ctx = context.WithValue(ctx, constant.TraceIdLogKey, traceId)
 		token := c.Request.Header.Get("Authorization")
 		var mapClaims jwt.MapClaims
-		var err error
+		var verifyJwtTokenError error
 		if strings.Contains(token, "Bearer") {
-			mapClaims, err = VerifyJwtToken(ctx, token[7:])
+			mapClaims, verifyJwtTokenError = VerifyJwtToken(ctx, token[7:])
 		} else {
-			mapClaims, err = VerifyJwtToken(ctx, token)
+			mapClaims, verifyJwtTokenError = VerifyJwtToken(ctx, token)
 		}
-		if err != nil {
+		if verifyJwtTokenError != nil {
 			c.AbortWithStatusJSON(http.StatusUnauthorized, &payload.Response{
 				Trace:        traceId,
 				ErrorCode:    constant.Unauthorized.ErrorCode,
@@ -259,14 +168,12 @@ func AuthenticationWithAuthorization(listOfRole []string) func(c *gin.Context) {
 			return
 		}
 		currentUsername := mapClaims["sub"].(string)
+		ctx = context.WithValue(ctx, constant.UsernameLogKey, currentUsername)
 		c.Set("auth", mapClaims)
-		log.Info(
-			fmt.Sprintf(
-				constant.LogPattern,
-				traceId,
-				currentUsername,
-				fmt.Sprintf("Check permission for url: %v", c.Request.RequestURI),
-			),
+		log.WithLevel(
+			constant.Info,
+			ctx,
+			fmt.Sprintf("Check permission for url: %v", c.Request.RequestURI),
 		)
 		if listOfRole == nil || len(listOfRole) == 0 {
 			c.Next()
@@ -275,16 +182,13 @@ func AuthenticationWithAuthorization(listOfRole []string) func(c *gin.Context) {
 		userRolesFromAccessToken := mapClaims["aud"]
 		if userRolesFromAccessToken != nil {
 			roleListInterface := userRolesFromAccessToken.([]interface{})
-			log.Info(
+			log.WithLevel(
+				constant.Info,
+				ctx,
 				fmt.Sprintf(
-					constant.LogPattern,
-					traceId,
-					currentUsername,
-					fmt.Sprintf(
-						"\n\t- this user has role: %v\n\t- current api require user with role: %v",
-						roleListInterface,
-						listOfRole,
-					),
+					"\n\t- this user has role: %v\n\t- current api require user with role: %v",
+					roleListInterface,
+					listOfRole,
 				),
 			)
 			for _, roleListInterfaceElement := range roleListInterface {
