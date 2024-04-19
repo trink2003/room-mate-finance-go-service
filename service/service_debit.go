@@ -39,8 +39,8 @@ func (h Handler) CalculateDebitOfUser(c *gin.Context) {
 
 	ctx := context.Background()
 
-	ctx = context.WithValue(ctx, "username", *currentUser)
-	ctx = context.WithValue(ctx, "traceId", utils.GetTraceId(c))
+	ctx = context.WithValue(ctx, constant.UsernameLogKey, *currentUser)
+	ctx = context.WithValue(ctx, constant.TraceIdLogKey, utils.GetTraceId(c))
 	requestPayload := payload.CalculateDebitRequestBody{}
 
 	if err := c.ShouldBindJSON(&requestPayload); err != nil {

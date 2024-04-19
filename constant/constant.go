@@ -37,6 +37,10 @@ const (
 var SensitiveField = [...]string{"password", "jwt", "token", "client_secret", "Authorization", "x-api-key"} // [...] instead of []: it ensures you get a (fixed size) array instead of a slice. So the values aren't fixed but the size is.
 var ValidMethod = []string{"GET", "POST", "PUT", "DELETE"}
 
+type LogKey string
+
+const UsernameLogKey LogKey = "username"
+const TraceIdLogKey LogKey = "traceId"
 const LogPattern = "[%s] [%s] 👉️ \t%s"
 
 var (

@@ -9,13 +9,13 @@ import (
 )
 
 func CheckAndSetTraceId(c *gin.Context) {
-	if traceId, _ := c.Get("traceId"); traceId == nil || traceId == "" {
-		c.Set("traceId", uuid.New().String())
+	if traceId, _ := c.Get(string(constant.TraceIdLogKey)); traceId == nil || traceId == "" {
+		c.Set(string(constant.TraceIdLogKey), uuid.New().String())
 	}
 }
 
 func GetTraceId(c *gin.Context) string {
-	if traceId, _ := c.Get("traceId"); traceId == nil || traceId == "" {
+	if traceId, _ := c.Get(string(constant.TraceIdLogKey)); traceId == nil || traceId == "" {
 		return ""
 	} else {
 		return traceId.(string)

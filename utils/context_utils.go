@@ -25,15 +25,15 @@ func PrepareContext(c *gin.Context) (context.Context, bool) {
 		)
 		return ctx, false
 	}
-	ctx = context.WithValue(ctx, "username", *currentUser)
-	ctx = context.WithValue(ctx, "traceId", GetTraceId(c))
+	ctx = context.WithValue(ctx, constant.UsernameLogKey, *currentUser)
+	ctx = context.WithValue(ctx, constant.TraceIdLogKey, GetTraceId(c))
 
 	return ctx, true
 }
 
 func GetCurrentUsernameFromContextForInsertOrUpdateDataInDb(ctx context.Context) string {
 	var currentUsernameInsertOrUpdateData = ""
-	var usernameFromContext = ctx.Value("username")
+	var usernameFromContext = ctx.Value(constant.UsernameLogKey)
 	if usernameFromContext != nil {
 		currentUsernameInsertOrUpdateData = usernameFromContext.(string)
 	}

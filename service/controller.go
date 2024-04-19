@@ -25,7 +25,7 @@ func RegisterRoutes(router *gin.Engine, db *gorm.DB) {
 	authRouter.POST("/login", utils.RequestLogger, utils.ResponseLogger, handler.Login, utils.ErrorHandler)
 
 	userRouter := router.Group(constant.BaseApiPath + "/user")
-	userRouter.POST("/get_all_active_user", utils.AuthenticationWithAuthorization([]string{AdminRole}), utils.RequestLogger, utils.ResponseLogger, handler.GetUsers, utils.ErrorHandler)
+	userRouter.POST("/get_all_active_user", utils.AuthenticationWithAuthorization([]string{AdminRole}), utils.RequestLogger, utils.ResponseLogger, handler.GetAllActiveUser, utils.ErrorHandler)
 	userRouter.POST("/get_member_in_room", utils.AuthenticationWithAuthorization([]string{UserRole}), utils.RequestLogger, utils.ResponseLogger, handler.GetMemberInRoom, utils.ErrorHandler)
 	userRouter.POST("/get_member_in_a_specific_room_code", utils.AuthenticationWithAuthorization([]string{AdminRole}), utils.RequestLogger, utils.ResponseLogger, handler.GetMemberInASpecificRoomCode, utils.ErrorHandler)
 

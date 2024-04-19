@@ -13,7 +13,7 @@ import (
 	"gorm.io/gorm"
 )
 
-func (h Handler) GetUsers(c *gin.Context) {
+func (h Handler) GetAllActiveUser(c *gin.Context) {
 
 	currentUser, isCurrentUserExist := utils.GetCurrentUsername(c)
 
@@ -32,8 +32,8 @@ func (h Handler) GetUsers(c *gin.Context) {
 
 	ctx := context.Background()
 
-	ctx = context.WithValue(ctx, "username", *currentUser)
-	ctx = context.WithValue(ctx, "traceId", utils.GetTraceId(c))
+	ctx = context.WithValue(ctx, constant.UsernameLogKey, *currentUser)
+	ctx = context.WithValue(ctx, constant.TraceIdLogKey, utils.GetTraceId(c))
 
 	requestPayload := payload.PageRequestBody{}
 	if err := c.ShouldBindJSON(&requestPayload); err != nil {
@@ -80,7 +80,7 @@ func (h Handler) GetUsers(c *gin.Context) {
 				).Where("active is not null"),
 			).Count(&total)
 
-		tx.WithContext(ctx).Limit(limit).
+		tx.WithContext(ctx).Preload("Rooms").Limit(limit).
 			Offset(offset).
 			Order(utils.SortMapToString(requestPayload.Request.Sort)).
 			Where(

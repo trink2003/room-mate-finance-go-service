@@ -434,7 +434,7 @@ func (h Handler) EditRoomName(c *gin.Context) {
 
 func saveNewRoom(db *gorm.DB, model *model.Rooms, ctx context.Context) *gorm.DB {
 	var currentUsernameInsertOrUpdateData = ""
-	var usernameFromContext = ctx.Value("username")
+	var usernameFromContext = ctx.Value(constant.UsernameLogKey)
 	if usernameFromContext != nil {
 		currentUsernameInsertOrUpdateData = usernameFromContext.(string)
 	}

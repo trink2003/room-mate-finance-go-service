@@ -13,8 +13,8 @@ import (
 )
 
 func WithLevel(level constant.LogLevelType, ctx context.Context, content string) {
-	usernameFromContext := ctx.Value("username")
-	traceIdFromContext := ctx.Value("traceId")
+	usernameFromContext := ctx.Value(constant.UsernameLogKey)
+	traceIdFromContext := ctx.Value(constant.TraceIdLogKey)
 	username := ""
 	traceId := ""
 	if usernameFromContext != nil {

@@ -70,8 +70,8 @@ func GenerateJwtToken(username string, role ...string) string {
 }
 
 func VerifyJwtToken(ctx context.Context, token string) (jwt.MapClaims, error) {
-	usernameFromContext := ctx.Value("username")
-	traceIdFromContext := ctx.Value("traceId")
+	usernameFromContext := ctx.Value(constant.UsernameLogKey)
+	traceIdFromContext := ctx.Value(constant.TraceIdLogKey)
 	username := ""
 	traceId := ""
 	if usernameFromContext != nil {
@@ -118,7 +118,7 @@ func GetCurrentUsername(c *gin.Context) (username *string, err error) {
 
 	emptyString := constant.EmptyString
 
-	if isCurrentUserExist == false {
+	if !isCurrentUserExist {
 		return &emptyString, errors.New("can not get current username")
 	}
 

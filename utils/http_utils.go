@@ -22,8 +22,8 @@ func ConsumeApi(
 	payload string,
 	isVerifySsl bool,
 ) (string, error) {
-	usernameFromContext := ctx.Value("username")
-	traceIdFromContext := ctx.Value("traceId")
+	usernameFromContext := ctx.Value(constant.UsernameLogKey)
+	traceIdFromContext := ctx.Value(constant.TraceIdLogKey)
 	username := ""
 	traceId := ""
 	if usernameFromContext != nil {

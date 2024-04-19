@@ -27,8 +27,8 @@ func (h Handler) AddNewExpense(c *gin.Context) {
 
 	ctx := context.Background()
 
-	ctx = context.WithValue(ctx, "username", *currentUser)
-	ctx = context.WithValue(ctx, "traceId", utils.GetTraceId(c))
+	ctx = context.WithValue(ctx, constant.UsernameLogKey, *currentUser)
+	ctx = context.WithValue(ctx, constant.TraceIdLogKey, utils.GetTraceId(c))
 
 	if isCurrentUserExist != nil {
 		c.AbortWithStatusJSON(
@@ -97,18 +97,18 @@ func (h Handler) AddNewExpense(c *gin.Context) {
 		return
 	}
 
-	if isCurrentUserExist != nil {
-		c.AbortWithStatusJSON(
-			http.StatusUnauthorized,
-			utils.ReturnResponse(
-				c,
-				constant.Unauthorized,
-				nil,
-				isCurrentUserExist.Error(),
-			),
-		)
-		return
-	}
+	// if isCurrentUserExist != nil {
+	// 	c.AbortWithStatusJSON(
+	// 		http.StatusUnauthorized,
+	// 		utils.ReturnResponse(
+	// 			c,
+	// 			constant.Unauthorized,
+	// 			nil,
+	// 			isCurrentUserExist.Error(),
+	// 		),
+	// 	)
+	// 	return
+	// }
 
 	boughtUser := model.Users{}
 
@@ -314,8 +314,8 @@ func (h Handler) RemoveExpense(c *gin.Context) {
 
 	ctx := context.Background()
 
-	ctx = context.WithValue(ctx, "username", *currentUser)
-	ctx = context.WithValue(ctx, "traceId", utils.GetTraceId(c))
+	ctx = context.WithValue(ctx, constant.UsernameLogKey, *currentUser)
+	ctx = context.WithValue(ctx, constant.TraceIdLogKey, utils.GetTraceId(c))
 
 	if isCurrentUserExist != nil {
 		c.AbortWithStatusJSON(
@@ -406,8 +406,8 @@ func (h Handler) SoftRemoveExpense(c *gin.Context) {
 
 	ctx := context.Background()
 
-	ctx = context.WithValue(ctx, "username", *currentUser)
-	ctx = context.WithValue(ctx, "traceId", utils.GetTraceId(c))
+	ctx = context.WithValue(ctx, constant.UsernameLogKey, *currentUser)
+	ctx = context.WithValue(ctx, constant.TraceIdLogKey, utils.GetTraceId(c))
 
 	if isCurrentUserExist != nil {
 		c.AbortWithStatusJSON(
@@ -556,8 +556,8 @@ func (h Handler) ActiveRemoveExpense(c *gin.Context) {
 
 	ctx := context.Background()
 
-	ctx = context.WithValue(ctx, "username", *currentUser)
-	ctx = context.WithValue(ctx, "traceId", utils.GetTraceId(c))
+	ctx = context.WithValue(ctx, constant.UsernameLogKey, *currentUser)
+	ctx = context.WithValue(ctx, constant.TraceIdLogKey, utils.GetTraceId(c))
 
 	if isCurrentUserExist != nil {
 		c.AbortWithStatusJSON(
@@ -706,8 +706,8 @@ func (h Handler) ListExpense(c *gin.Context) {
 
 	ctx := context.Background()
 
-	ctx = context.WithValue(ctx, "username", *currentUser)
-	ctx = context.WithValue(ctx, "traceId", utils.GetTraceId(c))
+	ctx = context.WithValue(ctx, constant.UsernameLogKey, *currentUser)
+	ctx = context.WithValue(ctx, constant.TraceIdLogKey, utils.GetTraceId(c))
 
 	if isCurrentUserExist != nil {
 		c.AbortWithStatusJSON(
@@ -816,7 +816,7 @@ func (h Handler) ListExpense(c *gin.Context) {
 
 func saveNewExpense(db *gorm.DB, model *model.ListOfExpenses, ctx context.Context) *gorm.DB {
 	var currentUsernameInsertOrUpdateData = ""
-	var usernameFromContext = ctx.Value("username")
+	var usernameFromContext = ctx.Value(constant.UsernameLogKey)
 	if usernameFromContext != nil {
 		currentUsernameInsertOrUpdateData = usernameFromContext.(string)
 	}
@@ -832,7 +832,7 @@ func saveNewExpense(db *gorm.DB, model *model.ListOfExpenses, ctx context.Contex
 
 func saveNewDebitUser(db *gorm.DB, model *model.DebitUser, ctx context.Context) *gorm.DB {
 	var currentUsernameInsertOrUpdateData = ""
-	var usernameFromContext = ctx.Value("username")
+	var usernameFromContext = ctx.Value(constant.UsernameLogKey)
 	if usernameFromContext != nil {
 		currentUsernameInsertOrUpdateData = usernameFromContext.(string)
 	}

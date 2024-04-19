@@ -204,8 +204,8 @@ func (h Handler) Login(ginContext *gin.Context) {
 		return
 	}
 
-	context = context2.WithValue(context, "username", requestPayload.Request.Username)
-	context = context2.WithValue(context, "traceId", utils.GetTraceId(ginContext))
+	context = context2.WithValue(context, constant.UsernameLogKey, requestPayload.Request.Username)
+	context = context2.WithValue(context, constant.TraceIdLogKey, utils.GetTraceId(ginContext))
 
 	var userInDatabase = model.Users{}
 
