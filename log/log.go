@@ -13,6 +13,11 @@ import (
 )
 
 func WithLevel(level constant.LogLevelType, ctx context.Context, content string) {
+	timeZoneLocation, timeLoadLocationErr := time.LoadLocation("Asia/Ho_Chi_Minh")
+	if timeLoadLocationErr != nil {
+		return
+	}
+	currentTimestamp := time.Now().In(timeZoneLocation)
 	usernameFromContext := ctx.Value(constant.UsernameLogKey)
 	traceIdFromContext := ctx.Value(constant.TraceIdLogKey)
 	username := ""
@@ -35,22 +40,22 @@ func WithLevel(level constant.LogLevelType, ctx context.Context, content string)
 		log.Info(
 			message,
 		)
-		break
+		// break
 	case constant.Warn:
 		log.Warn(
 			message,
 		)
-		break
+		// break
 	case constant.Error:
 		log.Error(
 			message,
 		)
-		break
+		// break
 	default:
 		log.Info(
 			message,
 		)
-		break
+		// break
 	}
 
 	host, token, source, sourcetype, index, splunkInfoIsFullSetInEnv := GetSplunkInformationFromEnvironment()
@@ -72,7 +77,14 @@ func WithLevel(level constant.LogLevelType, ctx context.Context, content string)
 		}
 	}
 
-	appendLogToFileError := AppendLogToFile(fmt.Sprintf("%s - %s\n", string(level), message))
+	appendLogToFileError := AppendLogToFile(
+		fmt.Sprintf(
+			"%s: %s - %s\n",
+			currentTimestamp.Format(constant.YyyyMmDdHhMmSsFormat),
+			string(level),
+			message,
+		),
+	)
 	if appendLogToFileError != nil {
 		log.Error(fmt.Sprintf(
 			constant.LogPattern,
@@ -95,18 +107,18 @@ func GetSplunkInformationFromEnvironment() (host string, token string, source st
 	var splunkSource, isSplunkSourceSet = os.LookupEnv("SPLUNK_SOURCE")
 	var splunkSourcetype, isSplunkSourcetypeSet = os.LookupEnv("SPLUNK_SOURCETYPE")
 	var splunkIndex, isSplunkIndexSet = os.LookupEnv("SPLUNK_INDEX")
-	if isSplunkHostSet == false && isSplunkTokenSet == false && isSplunkSourceSet == false && isSplunkSourcetypeSet == false && isSplunkIndexSet == false {
+	if !isSplunkHostSet && !isSplunkTokenSet && !isSplunkSourceSet && !isSplunkSourcetypeSet && !isSplunkIndexSet {
 		return "", "", "", "", "", false
 	}
 	return splunkHost, splunkToken, splunkSource, splunkSourcetype, splunkIndex, true
 }
 
 func AppendLogToFile(log string) error {
-	loc, timeLoadLocationErr := time.LoadLocation("Asia/Ho_Chi_Minh")
+	timeZoneLocation, timeLoadLocationErr := time.LoadLocation("Asia/Ho_Chi_Minh")
 	if timeLoadLocationErr != nil {
 		return timeLoadLocationErr
 	}
-	currentTimestamp := time.Now().In(loc)
+	currentTimestamp := time.Now().In(timeZoneLocation)
 
 	logFileName := fmt.Sprintf(constant.LogFileLocation, currentTimestamp.Year(), int(currentTimestamp.Month()), currentTimestamp.Day())
 
