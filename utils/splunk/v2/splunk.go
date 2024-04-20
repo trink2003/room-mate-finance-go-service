@@ -7,7 +7,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"net/http"
 	"os"
 	"time"
@@ -148,7 +147,7 @@ func (c *Client) LogEvents(events []*Event) error {
 	return c.doRequest(buf)
 }
 
-//Writer is a convience method for creating an io.Writer from a Writer with default values
+// Writer is a convience method for creating an io.Writer from a Writer with default values
 func (c *Client) Writer() io.Writer {
 	return &Writer{
 		Client: c,
@@ -159,14 +158,17 @@ func (c *Client) Writer() io.Writer {
 func (c *Client) doRequest(b *bytes.Buffer) error {
 	// make new request
 	url := c.URL
-	req, err := http.NewRequest("POST", url, b)
+	req, newRequestError := http.NewRequest("POST", url, b)
+	if newRequestError != nil {
+		return newRequestError
+	}
 	req.Header.Add("Content-Type", "application/json")
 	req.Header.Add("Authorization", "Splunk "+c.Token)
 
 	// receive response
-	res, err := c.HTTPClient.Do(req)
-	if err != nil {
-		return err
+	res, httpClientDoRequestError := c.HTTPClient.Do(req)
+	if httpClientDoRequestError != nil {
+		return httpClientDoRequestError
 	}
 
 	// need to make sure we close the body to avoid hanging the connection
@@ -176,12 +178,12 @@ func (c *Client) doRequest(b *bytes.Buffer) error {
 	switch res.StatusCode {
 	case 200:
 		// need to read the reply otherwise the connection hangs
-		io.Copy(ioutil.Discard, res.Body)
+		io.Copy(io.Discard, res.Body)
 		return nil
 	default:
-		respBody, err := ioutil.ReadAll(res.Body)
-		if err != nil {
-			return err
+		respBody, ioReadResponseError := io.ReadAll(res.Body)
+		if ioReadResponseError != nil {
+			return ioReadResponseError
 		}
 
 		// try deserializing response body to a typed HEC response

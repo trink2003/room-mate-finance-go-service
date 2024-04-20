@@ -6,9 +6,7 @@ const (
 	Info  LogLevelType = "INFO"
 	Warn  LogLevelType = "WARN"
 	Error LogLevelType = "ERROR"
-	// Debug LogLevelType = "DEBUG"
-	// Trace LogLevelType = "TRACE"
-
+	Debug LogLevelType = "DEBUG"
 )
 
 type ErrorEnums struct {
@@ -27,11 +25,12 @@ const AscKeyword = "ASC"
 const DescKeyword = "DESC"
 const EmptyString = ""
 const (
-	ContentTypeBinary = "application/octet-stream"
-	ContentTypeForm   = "application/x-www-form-urlencoded"
-	ContentTypeJSON   = "application/json"
-	ContentTypeHTML   = "text/html; charset=utf-8"
-	ContentTypeText   = "text/plain; charset=utf-8"
+	ContentTypeBinary    = "application/octet-stream"
+	ContentTypeForm      = "application/x-www-form-urlencoded"
+	ContentTypeJSON      = "application/json"
+	ContentTypeHTML      = "text/html; charset=utf-8"
+	ContentTypeText      = "text/plain; charset=utf-8"
+	ContentTypeIconImage = "image/x-icon"
 )
 
 var SensitiveField = [...]string{"password", "jwt", "token", "client_secret", "Authorization", "x-api-key"} // [...] instead of []: it ensures you get a (fixed size) array instead of a slice. So the values aren't fixed but the size is.

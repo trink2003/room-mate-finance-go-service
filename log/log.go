@@ -40,22 +40,22 @@ func WithLevel(level constant.LogLevelType, ctx context.Context, content string)
 		log.Info(
 			message,
 		)
-		// break
 	case constant.Warn:
 		log.Warn(
 			message,
 		)
-		// break
 	case constant.Error:
 		log.Error(
 			message,
 		)
-		// break
+	case constant.Debug:
+		log.Debug(
+			message,
+		)
 	default:
 		log.Info(
 			message,
 		)
-		// break
 	}
 
 	host, token, source, sourcetype, index, splunkInfoIsFullSetInEnv := GetSplunkInformationFromEnvironment()

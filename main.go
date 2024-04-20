@@ -2,8 +2,6 @@ package main
 
 import (
 	"context"
-	"github.com/gin-contrib/cors"
-	"github.com/gin-gonic/gin"
 	"net/http"
 	"os"
 	"room-mate-finance-go-service/config"
@@ -13,6 +11,9 @@ import (
 	"room-mate-finance-go-service/service"
 	"room-mate-finance-go-service/utils"
 	"time"
+
+	"github.com/gin-contrib/cors"
+	"github.com/gin-gonic/gin"
 )
 
 func main() {
@@ -74,7 +75,7 @@ func main() {
 	router.GET(constant.BaseApiPath+"/favicon.ico", func(ctx *gin.Context) {
 		ctx.Data(
 			http.StatusOK,
-			"image/x-icon",
+			constant.ContentTypeIconImage,
 			utils.ReadFileFromPath(utils.GetCurrentDirectory(), "icon", "favicon.ico"),
 		)
 	})
