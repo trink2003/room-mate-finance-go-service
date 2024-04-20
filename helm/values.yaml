@@ -8,7 +8,7 @@ database_password: cG9zdGdyZXM=
 database_host: 192.168.1.22
 database_port: 5432
 database_name: room-mate-finance
-jwt_secret_key: UThPeklIUm80YnVESUdmaHU0MXBJR0Z1YUNCc3c2QWd4SkhodXJsd0lIUnlZV2tnYm1qaHVxVjBJRlpwNGJ1SGRDQk9ZVzA=
+jwt_secret_key: UThPeklIUm80YnVESUdmaHU0MXBJR0Z1YUNCc3c2QWd4SkhodXJsd0lIUnlZV2tnYm1qaHVxVjBJRlpwNGJ1SGRDQk9ZVzA9
 jwt_expire_time: 1440
 database_migration: false
 database_initialization_data: false
