@@ -10,14 +10,22 @@ func InterfaceIsAStruct(i interface{}) bool {
 	return reflect.ValueOf(i).Type().Kind() == reflect.Struct
 }
 
-func GetAllFieldOfAStruct(i interface{}) {
-	if InterfaceIsAStruct(i) {
+func GetAllFieldOfAStruct(inputInterface interface{}) {
+	if !InterfaceIsAStruct(inputInterface) {
 		return
 	}
-	val := reflect.ValueOf(i).Elem()
+	reflect.TypeOf(inputInterface)
+	val := reflect.ValueOf(inputInterface) /*.Elem()*/
 	for i := 0; i < val.NumField(); i++ {
-		fmt.Println(val.Type().Field(i).Name)
-		//fieldValue := val.Field(i)
+		currentFieldStructField := val.Type().Field(i)
+		currentFieldValue := val.Field(i)
+		fmt.Printf(
+			"field information:\n\t>> field name: %s\n\t>> field value: %s\n\t>> field tag: %s\n\t>> example value in field tag json: %s\n",
+			currentFieldStructField.Name,
+			currentFieldValue,
+			currentFieldStructField.Tag,
+			GetStructTagValue(currentFieldStructField, "json"),
+		)
 	}
 
 }
@@ -42,4 +50,8 @@ func SetValue(obj any, field string, value any) {
 
 	prop := ref.FieldByName(field)
 	prop.Set(reflect.ValueOf(value))
+}
+
+func GetStructTagValue(f reflect.StructField, tagName string) string {
+	return f.Tag.Get(tagName)
 }
