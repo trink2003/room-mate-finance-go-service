@@ -19,3 +19,9 @@ func GenerateNewBaseEntity(ctx context.Context) model.BaseEntity {
 		UpdatedBy: currentUsernameInsertOrUpdateData,
 	}
 }
+
+func ChangeDataOfBaseEntityForUpdate(ctx context.Context, baseEntity *model.BaseEntity) {
+	var currentUsernameInsertOrUpdateData = GetCurrentUsernameFromContextForInsertOrUpdateDataInDb(ctx)
+	baseEntity.UpdatedAt = time.Now()
+	baseEntity.UpdatedBy = currentUsernameInsertOrUpdateData
+}

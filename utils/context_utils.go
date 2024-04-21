@@ -8,24 +8,26 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func PrepareContext(c *gin.Context) (context.Context, bool) {
+func PrepareContext(c *gin.Context, isBypassCurrentUserCheck ...bool) (context.Context, bool) {
 	ctx := context.Background()
 
 	currentUser, isCurrentUserExist := GetCurrentUsername(c)
 
-	if isCurrentUserExist != nil {
-		c.AbortWithStatusJSON(
-			http.StatusUnauthorized,
-			ReturnResponse(
-				c,
-				constant.Unauthorized,
-				nil,
-				isCurrentUserExist.Error(),
-			),
-		)
-		return ctx, false
+	if len(isBypassCurrentUserCheck) < 1 || isBypassCurrentUserCheck[0] == false {
+		if isCurrentUserExist != nil {
+			c.AbortWithStatusJSON(
+				http.StatusUnauthorized,
+				ReturnResponse(
+					c,
+					constant.Unauthorized,
+					nil,
+					isCurrentUserExist.Error(),
+				),
+			)
+			return ctx, false
+		}
+		ctx = context.WithValue(ctx, constant.UsernameLogKey, *currentUser)
 	}
-	ctx = context.WithValue(ctx, constant.UsernameLogKey, *currentUser)
 	ctx = context.WithValue(ctx, constant.TraceIdLogKey, GetTraceId(c))
 
 	return ctx, true

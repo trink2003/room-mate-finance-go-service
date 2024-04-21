@@ -2,9 +2,11 @@ package service
 
 import (
 	"context"
+	"fmt"
 	"math/big"
 	"net/http"
 	"room-mate-finance-go-service/constant"
+	"room-mate-finance-go-service/log"
 	"room-mate-finance-go-service/model"
 	"room-mate-finance-go-service/payload"
 	"room-mate-finance-go-service/utils"
@@ -292,4 +294,240 @@ func (h Handler) GetMemberInASpecificRoomCode(c *gin.Context) {
 			allActiveMemberInRoom,
 		),
 	)
+}
+
+func (h Handler) RemoveMemberInARoom(c *gin.Context) {
+
+	ctx, isSuccess := utils.PrepareContext(c)
+
+	if !isSuccess {
+		return
+	}
+
+	requestPayload := payload.RemoveMemberInARoomBody{}
+	if err := c.ShouldBindJSON(&requestPayload); err != nil {
+		c.AbortWithStatusJSON(
+			http.StatusBadRequest,
+			utils.ReturnResponse(
+				c,
+				constant.JsonBindingError,
+				nil,
+				err.Error(),
+			),
+		)
+		return
+	}
+
+	var errorEnum = constant.Success
+
+	transactionResultError := h.DB.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
+		log.WithLevel(
+			constant.Info,
+			ctx,
+			fmt.Sprintf(
+				"find room with code %v",
+				requestPayload.Request.RoomCode,
+			),
+		)
+		roomObjectFoundFromRoomCode := model.Rooms{}
+
+		var queryRoomError = tx.Where(
+			model.Rooms{
+				BaseEntity: model.BaseEntity{
+					Active: utils.GetPointerOfAnyValue(true),
+				},
+				RoomCode: requestPayload.Request.RoomCode,
+			},
+		).Find(&roomObjectFoundFromRoomCode)
+
+		if roomObjectFoundFromRoomCode.BaseEntity.Id == 0 || queryRoomError.Error != nil {
+			errorEnum = constant.RoomDoesNotExist
+			return queryRoomError.Error
+		}
+
+		log.WithLevel(
+			constant.Info,
+			ctx,
+			fmt.Sprintf(
+				"find user with id %v",
+				requestPayload.Request.UserId,
+			),
+		)
+
+		userObjectFoundFromUserIdInRequest := model.Users{}
+
+		var queryUserInDatabase = tx.Where(
+			model.Users{
+				BaseEntity: model.BaseEntity{
+					Id:     requestPayload.Request.UserId,
+					Active: utils.GetPointerOfAnyValue(true),
+				},
+				RoomsID: roomObjectFoundFromRoomCode.BaseEntity.Id,
+			},
+		).Find(&userObjectFoundFromUserIdInRequest)
+
+		if userObjectFoundFromUserIdInRequest.BaseEntity.Id == 0 || queryUserInDatabase.Error != nil {
+			errorEnum = constant.UserNotExisted
+			return queryUserInDatabase.Error
+		}
+
+		if userObjectFoundFromUserIdInRequest.Username == ctx.Value(constant.UsernameLogKey).(string) {
+			errorEnum = constant.ActionCannotPerformOnYourself
+			return nil
+		}
+
+		userObjectFoundFromUserIdInRequest.BaseEntity.Active = utils.GetPointerOfAnyValue(false)
+		utils.ChangeDataOfBaseEntityForUpdate(ctx, &userObjectFoundFromUserIdInRequest.BaseEntity)
+		updateUserError := tx.Save(&userObjectFoundFromUserIdInRequest)
+		if updateUserError != nil {
+			return updateUserError.Error
+		}
+
+		return nil
+	})
+
+	if transactionResultError != nil {
+		c.AbortWithStatusJSON(
+			http.StatusInternalServerError,
+			utils.ReturnResponse(
+				c,
+				constant.QueryError,
+				nil,
+				transactionResultError.Error(),
+			),
+		)
+		return
+	}
+
+	if errorEnum.ErrorCode != 0 {
+		c.AbortWithStatusJSON(
+			http.StatusBadRequest,
+			utils.ReturnResponse(
+				c,
+				errorEnum,
+				nil,
+			),
+		)
+		return
+	}
+
+	c.JSON(http.StatusOK, utils.ReturnResponse(c, errorEnum, nil))
+}
+
+func (h Handler) AddMemberToARoom(c *gin.Context) {
+
+	ctx, isSuccess := utils.PrepareContext(c)
+
+	if !isSuccess {
+		return
+	}
+
+	requestPayload := payload.AddMemberToARoomBody{}
+	if err := c.ShouldBindJSON(&requestPayload); err != nil {
+		c.AbortWithStatusJSON(
+			http.StatusBadRequest,
+			utils.ReturnResponse(
+				c,
+				constant.JsonBindingError,
+				nil,
+				err.Error(),
+			),
+		)
+		return
+	}
+
+	var errorEnum = constant.Success
+
+	transactionResultError := h.DB.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
+		log.WithLevel(
+			constant.Info,
+			ctx,
+			fmt.Sprintf(
+				"find room with code %v",
+				requestPayload.Request.RoomCode,
+			),
+		)
+		roomObjectFoundFromRoomCode := model.Rooms{}
+
+		var queryRoomError = tx.Where(
+			model.Rooms{
+				BaseEntity: model.BaseEntity{
+					Active: utils.GetPointerOfAnyValue(true),
+				},
+				RoomCode: requestPayload.Request.RoomCode,
+			},
+		).Find(&roomObjectFoundFromRoomCode)
+
+		if roomObjectFoundFromRoomCode.BaseEntity.Id == 0 || queryRoomError.Error != nil {
+			errorEnum = constant.RoomDoesNotExist
+			return queryRoomError.Error
+		}
+
+		log.WithLevel(
+			constant.Info,
+			ctx,
+			fmt.Sprintf(
+				"find user with id %v",
+				requestPayload.Request.UserId,
+			),
+		)
+
+		userObjectFoundFromUserIdInRequest := model.Users{}
+
+		var queryUserInDatabase = tx.Where(
+			model.Users{
+				BaseEntity: model.BaseEntity{
+					Id:     requestPayload.Request.UserId,
+					Active: utils.GetPointerOfAnyValue(false),
+				},
+				RoomsID: roomObjectFoundFromRoomCode.BaseEntity.Id,
+			},
+		).Find(&userObjectFoundFromUserIdInRequest)
+
+		if userObjectFoundFromUserIdInRequest.BaseEntity.Id == 0 || queryUserInDatabase.Error != nil {
+			errorEnum = constant.UserNotExisted
+			return queryUserInDatabase.Error
+		}
+
+		if userObjectFoundFromUserIdInRequest.Username == ctx.Value(constant.UsernameLogKey).(string) {
+			errorEnum = constant.ActionCannotPerformOnYourself
+			return nil
+		}
+
+		userObjectFoundFromUserIdInRequest.BaseEntity.Active = utils.GetPointerOfAnyValue(true)
+		utils.ChangeDataOfBaseEntityForUpdate(ctx, &userObjectFoundFromUserIdInRequest.BaseEntity)
+		updateUserError := tx.Save(&userObjectFoundFromUserIdInRequest)
+		if updateUserError != nil {
+			return updateUserError.Error
+		}
+
+		return nil
+	})
+
+	if transactionResultError != nil {
+		c.AbortWithStatusJSON(
+			http.StatusInternalServerError,
+			utils.ReturnResponse(
+				c,
+				constant.QueryError,
+				nil,
+				transactionResultError.Error(),
+			),
+		)
+		return
+	}
+
+	if errorEnum.ErrorCode != 0 {
+		c.AbortWithStatusJSON(
+			http.StatusBadRequest,
+			utils.ReturnResponse(
+				c,
+				errorEnum,
+				nil,
+			),
+		)
+		return
+	}
+
+	c.JSON(http.StatusOK, utils.ReturnResponse(c, errorEnum, nil))
 }

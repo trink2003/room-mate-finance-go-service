@@ -6,7 +6,6 @@ import (
 	"os"
 	"room-mate-finance-go-service/constant"
 	"room-mate-finance-go-service/utils/splunk/v2"
-	"strings"
 	"time"
 
 	"github.com/charmbracelet/log"
@@ -28,7 +27,7 @@ func WithLevel(level constant.LogLevelType, ctx context.Context, content string)
 	if traceIdFromContext != nil {
 		traceId = traceIdFromContext.(string)
 	}
-	fmt.Println(strings.Compare(string(level), string(constant.LogLevelType("INFO"))))
+	// fmt.Println(strings.Compare(string(level), string(constant.LogLevelType("INFO"))))
 	var message = fmt.Sprintf(
 		constant.LogPattern,
 		traceId,

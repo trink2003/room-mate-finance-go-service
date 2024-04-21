@@ -127,4 +127,8 @@ var (
 		ErrorCode:    17,
 		ErrorMessage: "Can not delete default room",
 	}
+	ActionCannotPerformOnYourself = ErrorEnums{
+		ErrorCode:    18,
+		ErrorMessage: "You cannot perform this action to your self",
+	}
 )
