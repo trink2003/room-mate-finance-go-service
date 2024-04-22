@@ -68,9 +68,41 @@ eval ${docker_build_command}
 cat <<EOF | cat -
 
 
->> Docker compose up
+>> Docker compose
 
 EOF
+
+cat <<EOF | docker compose -f - down
+services:
+  room-mate-finance-go-service:
+    container_name: room-mate-finance-service
+    image: ${images_name}:${images_tag}
+    environment:
+      - "DATABASE_USERNAME=postgres"
+      - "DATABASE_PASSWORD=postgres"
+      - "DATABASE_HOST=10.0.2.10"
+      - "DATABASE_PORT=5432"
+      - "DATABASE_NAME=room-mate-finance"
+      - "GIN_MODE=release"
+      - "JWT_SECRET_KEY=Q8OzIHRo4buDIGfhu41pIGFuaCBsw6AgxJHhurlwIHRyYWkgbmjhuqV0IFZp4buHdCBOYW0="
+      - "JWT_EXPIRE_TIME=1440"
+      - "DATABASE_MIGRATION=false"
+      - "DATABASE_INITIALIZATION_DATA=false"
+    ports:
+      - "8080:8080"
+EOF
+
+old_images=$(docker images | grep room | awk '{print $3}')
+
+for VAR in $old_images
+do
+    if docker rmi $VAR
+    then
+        echo -e "\n\n >> Remove successfully"
+    else
+        echo -e "\n\n >> Remove failed"
+    fi
+done
 
 cat <<EOF | docker compose -f - up -d
 services:
