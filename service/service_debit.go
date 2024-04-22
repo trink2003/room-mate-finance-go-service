@@ -210,5 +210,4 @@ func (h Handler) CalculateDebitOfUser(c *gin.Context) {
 			calculateResult,
 		),
 	)
-
 }

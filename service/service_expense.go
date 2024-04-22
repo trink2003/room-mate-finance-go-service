@@ -305,7 +305,6 @@ func (h Handler) AddNewExpense(c *gin.Context) {
 			savedExpense,
 		),
 	)
-
 }
 
 func (h Handler) RemoveExpense(c *gin.Context) {

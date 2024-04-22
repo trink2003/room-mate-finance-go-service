@@ -283,5 +283,4 @@ func (h Handler) Login(ginContext *gin.Context) {
 			response,
 		),
 	)
-
 }

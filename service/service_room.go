@@ -338,7 +338,6 @@ func (h Handler) DeleteRoom(c *gin.Context) {
 			"ok",
 		),
 	)
-
 }
 
 func (h Handler) EditRoomName(c *gin.Context) {
