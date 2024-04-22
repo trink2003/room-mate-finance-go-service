@@ -27,6 +27,18 @@ images_name="$1"
 current_time=$(date -d "$b 0 min" "+%Y%m%d%H%M%S")
 images_tag="${current_time}_${lastest_git_commit_hash_id}"
 
+old_images=$(docker images | grep room | awk '{print $3}')
+
+for VAR in $old_images
+do
+    if docker rmi $VAR
+    then
+        echo -e "\n\n >> Remove successfully"
+    else
+        echo -e "\n\n >> Remove failed"
+    fi
+done
+
 cat <<EOF | cat -
 
 
@@ -91,18 +103,6 @@ services:
     ports:
       - "8080:8080"
 EOF
-
-old_images=$(docker images | grep room | awk '{print $3}')
-
-for VAR in $old_images
-do
-    if docker rmi $VAR
-    then
-        echo -e "\n\n >> Remove successfully"
-    else
-        echo -e "\n\n >> Remove failed"
-    fi
-done
 
 cat <<EOF | docker compose -f - up -d
 services:
