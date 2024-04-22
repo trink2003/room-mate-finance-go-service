@@ -111,7 +111,7 @@ EOF
 scp -P $ssh_port -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no -pr ./helm/ $ssh_user@$ssh_host:$target_dir
 scp -P $ssh_port -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no -pr ./icon/ $ssh_user@$ssh_host:$target_dir
 scp -P $ssh_port -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no -p ./Dockerfile $ssh_user@$ssh_host:$target_dir
-scp -P $ssh_port -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no -p ./permission.json $ssh_user@$ssh_host:$target_dir
+# scp -P $ssh_port -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no -p ./permission.json $ssh_user@$ssh_host:$target_dir
 scp -P $ssh_port -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no -p ./go_app $ssh_user@$ssh_host:$target_dir
 
 # -----------------

@@ -26,6 +26,6 @@ ADD ./go_app /go_app
 
 ADD ./icon/favicon.ico /icon/favicon.ico
 
-ADD ./permission.json /permission.json
+# ADD ./permission.json /permission.json
 
 CMD ["/go_app"]
