@@ -99,7 +99,7 @@ func main() {
 	log.WithLevel(
 		constant.Info,
 		ctx,
-		"Application starting",
+		"Application starting with port: "+applicationPort,
 	)
 
 	ginErr := router.Run(":" + applicationPort)
