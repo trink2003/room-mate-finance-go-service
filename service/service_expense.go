@@ -6,6 +6,7 @@ import (
 	"math/big"
 	"net/http"
 	"room-mate-finance-go-service/constant"
+	"room-mate-finance-go-service/log"
 	"room-mate-finance-go-service/model"
 	"room-mate-finance-go-service/payload"
 	"room-mate-finance-go-service/utils"
@@ -15,7 +16,6 @@ import (
 
 	"github.com/google/uuid"
 
-	"github.com/charmbracelet/log"
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
@@ -196,13 +196,10 @@ func (h Handler) AddNewExpense(c *gin.Context) {
 		)
 		return
 	}
-	log.Info(
-		fmt.Sprintf(
-			constant.LogPattern,
-			utils.GetTraceId(c),
-			*currentUser,
-			fmt.Sprintf("bought user is user with id: %s", strconv.FormatInt(boughtUser.BaseEntity.Id, 10)),
-		),
+	log.WithLevel(
+		constant.Info,
+		ctx,
+		fmt.Sprintf("bought user is user with id: %s", strconv.FormatInt(boughtUser.BaseEntity.Id, 10)),
 	)
 
 	expense := model.ListOfExpenses{
@@ -216,13 +213,10 @@ func (h Handler) AddNewExpense(c *gin.Context) {
 	// Calculate the divisor based on participation
 	divisor := new(big.Float).SetInt64(int64(len(requestPayload.Request.UserToPaid)))
 	if requestPayload.Request.IsParticipating {
-		log.Info(
-			fmt.Sprintf(
-				constant.LogPattern,
-				utils.GetTraceId(c),
-				*currentUser,
-				"this user will participate to this expense",
-			),
+		log.WithLevel(
+			constant.Info,
+			ctx,
+			"this user will participate to this expense",
 		)
 		divisor.Add(divisor, big.NewFloat(1))
 	}
@@ -238,19 +232,16 @@ func (h Handler) AddNewExpense(c *gin.Context) {
 	roundedNumber, _ := scaledNumber.Int(nil)
 
 	finalEquallyDividedAmount := new(big.Float).Quo(new(big.Float).SetInt(roundedNumber), big.NewFloat(100))
-	log.Info(
+	log.WithLevel(
+		constant.Info,
+		ctx,
 		fmt.Sprintf(
-			constant.LogPattern,
-			utils.GetTraceId(c),
-			*currentUser,
-			fmt.Sprintf(
-				"amount info:\n    - finalEquallyDividedAmount: %s\n\t- requestAmount: %s\n\t- equallyDividedAmount: %s\n\t- divisor: %s\n\t- finalEquallyDividedAmount: %s",
-				finalEquallyDividedAmount,
-				requestAmount,
-				equallyDividedAmount,
-				divisor,
-				finalEquallyDividedAmount,
-			),
+			"amount info:\n    - finalEquallyDividedAmount: %s\n\t- requestAmount: %s\n\t- equallyDividedAmount: %s\n\t- divisor: %s\n\t- finalEquallyDividedAmount: %s",
+			finalEquallyDividedAmount,
+			requestAmount,
+			equallyDividedAmount,
+			divisor,
+			finalEquallyDividedAmount,
 		),
 	)
 
@@ -303,6 +294,262 @@ func (h Handler) AddNewExpense(c *gin.Context) {
 			c,
 			constant.Success,
 			savedExpense,
+		),
+	)
+}
+
+func (h Handler) AddNewExpenseFromList(c *gin.Context) {
+
+	currentUser, isCurrentUserExist := utils.GetCurrentUsername(c)
+
+	ctx := context.Background()
+
+	ctx = context.WithValue(ctx, constant.UsernameLogKey, *currentUser)
+	ctx = context.WithValue(ctx, constant.TraceIdLogKey, utils.GetTraceId(c))
+
+	if isCurrentUserExist != nil {
+		c.AbortWithStatusJSON(
+			http.StatusUnauthorized,
+			utils.ReturnResponse(
+				c,
+				constant.Unauthorized,
+				nil,
+				isCurrentUserExist.Error(),
+			),
+		)
+		return
+	}
+
+	requestPayload := payload.AddNewExpenseFromList{}
+
+	if err := c.ShouldBindJSON(&requestPayload); err != nil {
+		c.AbortWithStatusJSON(
+			http.StatusBadRequest,
+			utils.ReturnResponse(
+				c,
+				constant.JsonBindingError,
+				nil,
+				err.Error(),
+			),
+		)
+		return
+	}
+
+	for _, expenseElement := range requestPayload.Request {
+		if expenseElement.Amount <= 0 {
+			c.AbortWithStatusJSON(
+				http.StatusBadRequest,
+				utils.ReturnResponse(
+					c,
+					constant.DataFormatError,
+					nil,
+					"Amount need to be equal or greater than 0",
+				),
+			)
+			return
+		}
+
+		if len(expenseElement.UserToPaid) == 0 {
+			c.AbortWithStatusJSON(
+				http.StatusBadRequest,
+				utils.ReturnResponse(
+					c,
+					constant.DataFormatError,
+					nil,
+					"List of user need to pay must be not empty",
+				),
+			)
+			return
+		}
+
+		if expenseElement.Purpose == "" {
+			c.AbortWithStatusJSON(
+				http.StatusBadRequest,
+				utils.ReturnResponse(
+					c,
+					constant.DataFormatError,
+					nil,
+					"What is your purpose of this expense?",
+				),
+			)
+			return
+		}
+
+		boughtUser := model.Users{}
+
+		h.DB.WithContext(ctx).Where(
+			&model.Users{
+				BaseEntity: model.BaseEntity{
+					Active: utils.GetPointerOfAnyValue(true),
+				},
+				Username: *currentUser,
+			},
+		).Find(&boughtUser)
+
+		if boughtUser.BaseEntity.Id == 0 {
+			c.AbortWithStatusJSON(
+				http.StatusNotFound,
+				utils.ReturnResponse(
+					c,
+					constant.UserNotExisted,
+					nil,
+					"Who are you?",
+				),
+			)
+			return
+		}
+
+		var numberOfActiveUser int64 = 0
+
+		h.DB.WithContext(ctx).
+			Model(&model.Users{}).
+			Where(
+				h.DB.
+					Where(
+						&model.Users{
+							BaseEntity: model.BaseEntity{
+								Active: utils.GetPointerOfAnyValue(true),
+							},
+						},
+					).
+					Where(
+						"id NOT IN ?",
+						[]int64{boughtUser.BaseEntity.Id},
+					),
+			).
+			Count(&numberOfActiveUser)
+
+		var allActiveUserInList []model.Users
+
+		h.DB.WithContext(ctx).Clauses(clause.Locking{Strength: "UPDATE"}).
+			Where(
+				h.DB.
+					Where(
+						&model.Users{
+							BaseEntity: model.BaseEntity{
+								Active: utils.GetPointerOfAnyValue(true),
+							},
+						},
+					).
+					Where(
+						"id IN ?",
+						expenseElement.UserToPaid,
+					),
+			).
+			Find(&allActiveUserInList)
+
+		if numberOfActiveUser < 2 || len(allActiveUserInList) < len(expenseElement.UserToPaid) {
+			c.AbortWithStatusJSON(
+				http.StatusBadRequest,
+				utils.ReturnResponse(
+					c,
+					constant.InvalidNumberOfUser,
+					nil,
+				),
+			)
+			return
+		}
+
+		if slices.Contains(expenseElement.UserToPaid, boughtUser.BaseEntity.Id) {
+			c.AbortWithStatusJSON(
+				http.StatusBadRequest,
+				utils.ReturnResponse(
+					c,
+					constant.InvalidUserToPaidList,
+					nil,
+				),
+			)
+			return
+		}
+		log.WithLevel(
+			constant.Info,
+			ctx,
+			fmt.Sprintf("bought user is user with id: %s", strconv.FormatInt(boughtUser.BaseEntity.Id, 10)),
+		)
+
+		expense := model.ListOfExpenses{
+			Purpose:        expenseElement.Purpose,
+			Amount:         expenseElement.Amount,
+			BoughtByUserID: boughtUser.BaseEntity.Id,
+		}
+
+		var equallyDividedAmount *big.Float
+
+		// Calculate the divisor based on participation
+		divisor := new(big.Float).SetInt64(int64(len(expenseElement.UserToPaid)))
+		if expenseElement.IsParticipating {
+			log.WithLevel(
+				constant.Info,
+				ctx,
+				"this user will participate to this expense",
+			)
+			divisor.Add(divisor, big.NewFloat(1))
+		}
+
+		requestAmount := new(big.Float).SetFloat64(expenseElement.Amount)
+
+		// Perform the division
+		equallyDividedAmount = new(big.Float).Quo(requestAmount, divisor)
+		// equallyDividedAmount.SetPrec(2) // Set precision to 2 decimal places
+
+		scaledNumber := new(big.Float).Mul(equallyDividedAmount, big.NewFloat(100))
+
+		roundedNumber, _ := scaledNumber.Int(nil)
+
+		finalEquallyDividedAmount := new(big.Float).Quo(new(big.Float).SetInt(roundedNumber), big.NewFloat(100))
+		log.WithLevel(
+			constant.Info,
+			ctx,
+			fmt.Sprintf(
+				"amount info:\n    - finalEquallyDividedAmount: %s\n\t- requestAmount: %s\n\t- equallyDividedAmount: %s\n\t- divisor: %s\n\t- finalEquallyDividedAmount: %s",
+				finalEquallyDividedAmount,
+				requestAmount,
+				equallyDividedAmount,
+				divisor,
+				finalEquallyDividedAmount,
+			),
+		)
+
+		expenseTransactionError := h.DB.WithContext(ctx).Transaction(
+			func(tx *gorm.DB) error {
+				if saveNewExpenseErr := saveNewExpense(tx, &expense, ctx); saveNewExpenseErr.Error != nil {
+					return saveNewExpenseErr.Error
+				}
+				paidAmount, _ := finalEquallyDividedAmount.Float64()
+				for _, user := range allActiveUserInList {
+					debitOfCurrentUser := model.DebitUser{
+						UserToPaidID:     user.BaseEntity.Id,
+						PaidToUserID:     boughtUser.BaseEntity.Id,
+						ListOfExpensesID: expense.BaseEntity.Id,
+						Amount:           paidAmount,
+					}
+					if saveNewDebitUserErr := saveNewDebitUser(tx, &debitOfCurrentUser, ctx); saveNewDebitUserErr.Error != nil {
+						return saveNewDebitUserErr.Error
+					}
+				}
+				return nil
+			},
+		)
+		if expenseTransactionError != nil {
+			c.AbortWithStatusJSON(
+				http.StatusBadRequest,
+				utils.ReturnResponse(
+					c,
+					constant.QueryError,
+					nil,
+					expenseTransactionError.Error(),
+				),
+			)
+			return
+		}
+	}
+
+	c.JSON(
+		http.StatusOK,
+		utils.ReturnResponse(
+			c,
+			constant.Success,
+			"ok",
 		),
 	)
 }
@@ -486,13 +733,10 @@ func (h Handler) SoftRemoveExpense(c *gin.Context) {
 
 		debitUser := expense.DebitUser
 		for _, du := range debitUser {
-			log.Info(
-				fmt.Sprintf(
-					constant.LogPattern,
-					utils.GetTraceId(c),
-					*currentUser,
-					"changing active status of debit user id "+strconv.FormatInt(du.BaseEntity.Id, 10)+" to false",
-				),
+			log.WithLevel(
+				constant.Info,
+				ctx,
+				"changing active status of debit user id "+strconv.FormatInt(du.BaseEntity.Id, 10)+" to false",
 			)
 			*du.BaseEntity.Active = false
 		}
@@ -501,13 +745,10 @@ func (h Handler) SoftRemoveExpense(c *gin.Context) {
 			return debitUserSoftRemoveResult.Error
 		}
 		*expense.BaseEntity.Active = false
-		log.Info(
-			fmt.Sprintf(
-				constant.LogPattern,
-				utils.GetTraceId(c),
-				*currentUser,
-				"changing active status of expense id "+strconv.FormatInt(expense.BaseEntity.Id, 10)+" to false",
-			),
+		log.WithLevel(
+			constant.Info,
+			ctx,
+			"changing active status of expense id "+strconv.FormatInt(expense.BaseEntity.Id, 10)+" to false",
 		)
 		expenseSoftRemoveResult := tx.Save(&expense)
 		if expenseSoftRemoveResult.Error != nil {
@@ -636,13 +877,10 @@ func (h Handler) ActiveRemoveExpense(c *gin.Context) {
 
 		debitUser := expense.DebitUser
 		for _, du := range debitUser {
-			log.Info(
-				fmt.Sprintf(
-					constant.LogPattern,
-					utils.GetTraceId(c),
-					*currentUser,
-					"changing active status of debit user id "+strconv.FormatInt(du.BaseEntity.Id, 10)+" to true",
-				),
+			log.WithLevel(
+				constant.Info,
+				ctx,
+				"changing active status of debit user id "+strconv.FormatInt(du.BaseEntity.Id, 10)+" to true",
 			)
 			*du.BaseEntity.Active = true
 		}
@@ -651,13 +889,10 @@ func (h Handler) ActiveRemoveExpense(c *gin.Context) {
 			return debitUserSoftRemoveResult.Error
 		}
 		*expense.BaseEntity.Active = true
-		log.Info(
-			fmt.Sprintf(
-				constant.LogPattern,
-				utils.GetTraceId(c),
-				*currentUser,
-				"changing active status of expense id "+strconv.FormatInt(expense.BaseEntity.Id, 10)+" to true",
-			),
+		log.WithLevel(
+			constant.Info,
+			ctx,
+			"changing active status of expense id "+strconv.FormatInt(expense.BaseEntity.Id, 10)+" to true",
 		)
 		expenseSoftRemoveResult := tx.Save(&expense)
 		if expenseSoftRemoveResult.Error != nil {

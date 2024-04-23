@@ -92,6 +92,10 @@ type ExpenseRequestBody struct {
 	Request ExpenseRequestBodyValue `json:"request" binding:"required"`
 }
 
+type AddNewExpenseFromList struct {
+	Request []ExpenseRequestBodyValue `json:"request" binding:"required"`
+}
+
 type RemoveExpenseBody struct {
 	Request int64 `json:"request"`
 }
