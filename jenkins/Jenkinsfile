@@ -1,6 +1,6 @@
 def images_name = 'tuanloc/room-mate-finance'
 def app_name = 'room-mate-finance'
-def app_namespace = 'service'
+def app_namespace = 'finance-service'
 def replica = 2
 
 pipeline {
