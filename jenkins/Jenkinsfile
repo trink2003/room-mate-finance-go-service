@@ -10,7 +10,7 @@ pipeline {
     }
     environment {
         GIT_CREDENTIALS_ID = 'tuanloc-github'
-        APPLICATION_GIT_BRANCH = '*/master'
+        APPLICATION_GIT_BRANCH = '*/dev'
         APPLICATION_GIT_REPOSITRY = 'https://github.com/tuanloc1105/room-mate-finance-go-service.git'
         SSH_USER='ae403'
         SSH_HOST='192.168.1.22'
