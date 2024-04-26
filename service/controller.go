@@ -30,6 +30,7 @@ func RegisterRoutes(router *gin.Engine, db *gorm.DB) {
 	userRouter.POST("/get_member_in_a_specific_room_code", utils.AuthenticationWithAuthorization([]string{AdminRole}), utils.RequestLogger, utils.ResponseLogger, handler.GetMemberInASpecificRoomCode, utils.ErrorHandler)
 	userRouter.POST("/remove_member_in_a_room", utils.AuthenticationWithAuthorization([]string{AdminRole}), utils.RequestLogger, utils.ResponseLogger, handler.RemoveMemberInARoom, utils.ErrorHandler)
 	userRouter.POST("/add_member_to_a_room", utils.AuthenticationWithAuthorization([]string{AdminRole}), utils.RequestLogger, utils.ResponseLogger, handler.AddMemberToARoom, utils.ErrorHandler)
+	userRouter.POST("/move_all_member_to_a_new_room", utils.AuthenticationWithAuthorization([]string{AdminRole}), utils.RequestLogger, utils.ResponseLogger, handler.MoveAllMemberToANewRoom, utils.ErrorHandler)
 
 	expenseRouter := router.Group(constant.BaseApiPath + "/expense")
 	expenseRouter.POST("/create_new_expense", utils.AuthenticationWithAuthorization([]string{UserRole}), utils.RequestLogger, utils.ResponseLogger, handler.AddNewExpense, utils.ErrorHandler)

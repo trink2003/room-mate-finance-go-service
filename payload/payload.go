@@ -2,6 +2,15 @@ package payload
 
 import "room-mate-finance-go-service/model"
 
+type MoveAllMemberToANewRoomBodyValue struct {
+	OldRoomCode string `json:"oldRoomCode" binding:"required"`
+	NewRoomCode string `json:"newRoomCode" binding:"required"`
+}
+
+type MoveAllMemberToANewRoomBody struct {
+	Request MoveAllMemberToANewRoomBodyValue `json:"request"`
+}
+
 type AddMemberToARoomBodyValue struct {
 	RoomCode string `json:"roomCode" binding:"required"`
 	UserId   int64  `json:"userId" binding:"required"`

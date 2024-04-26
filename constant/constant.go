@@ -131,4 +131,12 @@ var (
 		ErrorCode:    18,
 		ErrorMessage: "You cannot perform this action to your self",
 	}
+	EmptyRoomError = ErrorEnums{
+		ErrorCode:    19,
+		ErrorMessage: "Room currenty does not have any memeber",
+	}
+	ChangeRoomForAllMemberError = ErrorEnums{
+		ErrorCode:    20,
+		ErrorMessage: "Change room for all member error",
+	}
 )

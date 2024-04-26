@@ -531,3 +531,142 @@ func (h Handler) AddMemberToARoom(c *gin.Context) {
 
 	c.JSON(http.StatusOK, utils.ReturnResponse(c, errorEnum, nil))
 }
+
+func (h Handler) MoveAllMemberToANewRoom(c *gin.Context) {
+
+	ctx, isSuccess := utils.PrepareContext(c)
+
+	if !isSuccess {
+		return
+	}
+
+	requestPayload := payload.MoveAllMemberToANewRoomBody{}
+	if err := c.ShouldBindJSON(&requestPayload); err != nil {
+		c.AbortWithStatusJSON(
+			http.StatusBadRequest,
+			utils.ReturnResponse(
+				c,
+				constant.JsonBindingError,
+				nil,
+				err.Error(),
+			),
+		)
+		return
+	}
+
+	var errorEnum = constant.Success
+
+	transactionResultError := h.DB.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
+		log.WithLevel(
+			constant.Info,
+			ctx,
+			fmt.Sprintf(
+				"find room with old code %v",
+				requestPayload.Request.OldRoomCode,
+			),
+		)
+		roomObjectFoundFromOldRoomCode := model.Rooms{}
+
+		var queryOldRoomError = tx.Where(
+			model.Rooms{
+				BaseEntity: model.BaseEntity{
+					Active: utils.GetPointerOfAnyValue(true),
+				},
+				RoomCode: requestPayload.Request.OldRoomCode,
+			},
+		).Find(&roomObjectFoundFromOldRoomCode)
+
+		if roomObjectFoundFromOldRoomCode.BaseEntity.Id == 0 || queryOldRoomError.Error != nil {
+			errorEnum = constant.RoomDoesNotExist
+			errorEnum.ErrorMessage = "Invalid old room code"
+			return queryOldRoomError.Error
+		}
+		log.WithLevel(
+			constant.Info,
+			ctx,
+			fmt.Sprintf(
+				"find room with new code %v",
+				requestPayload.Request.NewRoomCode,
+			),
+		)
+		roomObjectFoundFromNewRoomCode := model.Rooms{}
+
+		var queryNewRoomError = tx.Where(
+			model.Rooms{
+				BaseEntity: model.BaseEntity{
+					Active: utils.GetPointerOfAnyValue(true),
+				},
+				RoomCode: requestPayload.Request.NewRoomCode,
+			},
+		).Find(&roomObjectFoundFromNewRoomCode)
+
+		if roomObjectFoundFromNewRoomCode.BaseEntity.Id == 0 || queryNewRoomError.Error != nil {
+			errorEnum = constant.RoomDoesNotExist
+			errorEnum.ErrorMessage = "Invalid new room code"
+			return queryNewRoomError.Error
+		}
+
+		log.WithLevel(
+			constant.Info,
+			ctx,
+			"find all user from old room code",
+		)
+
+		var listUsersInRoom = []model.Users{}
+
+		var listUserQueryError = tx.Where(
+			model.Users{
+				BaseEntity: model.BaseEntity{
+					Active: utils.GetPointerOfAnyValue(true),
+				},
+				RoomsID: roomObjectFoundFromOldRoomCode.BaseEntity.Id,
+			},
+		).Find(&listUsersInRoom)
+
+		if len(listUsersInRoom) < 1 || listUserQueryError.Error != nil {
+			errorEnum = constant.EmptyRoomError
+			return listUserQueryError.Error
+		}
+
+		for _, user := range listUsersInRoom {
+			utils.ChangeDataOfBaseEntityForUpdate(ctx, &user.BaseEntity)
+			user.RoomsID = roomObjectFoundFromNewRoomCode.BaseEntity.Id
+		}
+
+		var saveListOfUsersToNewRoomError = tx.Save(&listUsersInRoom)
+
+		if saveListOfUsersToNewRoomError.Error != nil {
+			errorEnum = constant.EmptyRoomError
+			return saveListOfUsersToNewRoomError.Error
+		}
+
+		return nil
+	})
+
+	if transactionResultError != nil {
+		c.AbortWithStatusJSON(
+			http.StatusInternalServerError,
+			utils.ReturnResponse(
+				c,
+				constant.QueryError,
+				nil,
+				transactionResultError.Error(),
+			),
+		)
+		return
+	}
+
+	if errorEnum.ErrorCode != 0 {
+		c.AbortWithStatusJSON(
+			http.StatusBadRequest,
+			utils.ReturnResponse(
+				c,
+				errorEnum,
+				nil,
+			),
+		)
+		return
+	}
+
+	c.JSON(http.StatusOK, utils.ReturnResponse(c, errorEnum, nil))
+}
