@@ -5,6 +5,7 @@ import (
 	"crypto/cipher"
 	"crypto/rand"
 	"crypto/sha256"
+	"encoding/hex"
 	"errors"
 	"fmt"
 	"io"
@@ -28,65 +29,87 @@ func GenerateCheckSumUsingSha256Sum256(input string) (string, error) {
 	return fmt.Sprintf("%x", sum), nil
 }
 
-func AesDecryption(input string, key string) (string, error) {
-	if input == "" || key == "" {
+func AesEncryption(stringToEncrypt string, keyString string) (encryptedString string, err error) {
+	if stringToEncrypt == "" || keyString == "" {
 		return constant.EmptyString, errors.New("input can not be empty")
 	}
-	if len(key) < 32 {
-		return constant.EmptyString, errors.New("key length must be greater than 32 bytes")
-	}
-	gcm, nonce, err := generateAesNecessaryComponent([]byte(key))
-	if err != nil {
-		return constant.EmptyString, err
-	}
-	plaintext, decryptionError := gcm.Open(nil, nonce, []byte(input), nil)
-	if decryptionError != nil {
-		return constant.EmptyString, decryptionError
-	}
-	// return fmt.Sprintf("%s", plaintext), nil
-	return string(plaintext), nil
-}
-
-func AesEncryption(input string, key string) (string, error) {
-	if input == "" || key == "" {
-		return constant.EmptyString, errors.New("input can not be empty")
-	}
-	if len(key) < 32 {
+	if len(keyString) < 32 {
 		return constant.EmptyString, errors.New("key length must be greater than 32 bytes")
 	}
 
-	gcm, nonce, err := generateAesNecessaryComponent([]byte(key))
-	if err != nil {
-		return constant.EmptyString, err
+	//Since the key is in string, we need to convert decode it to bytes
+	key, hexDecodeStringError := hex.DecodeString(keyString)
+	if hexDecodeStringError != nil {
+		return constant.EmptyString, hexDecodeStringError
+	}
+	plaintext := []byte(stringToEncrypt)
+
+	//Create a new Cipher Block from the key
+	block, aesNewCipherError := aes.NewCipher(key)
+	if aesNewCipherError != nil {
+		return constant.EmptyString, aesNewCipherError
 	}
 
-	// Encrypt the input
-	ciphertext := gcm.Seal(nonce, nonce, []byte(input), nil)
+	//Create a new GCM - https://en.wikipedia.org/wiki/Galois/Counter_Mode
+	//https://golang.org/pkg/crypto/cipher/#NewGCM
+	aesGCM, cipherNewGcmError := cipher.NewGCM(block)
+	if cipherNewGcmError != nil {
+		return constant.EmptyString, cipherNewGcmError
+	}
 
+	//Create a nonce. Nonce should be from GCM
+	nonce := make([]byte, aesGCM.NonceSize())
+	if _, ioReadFullError := io.ReadFull(rand.Reader, nonce); ioReadFullError != nil {
+		return constant.EmptyString, ioReadFullError
+	}
+
+	//Encrypt the data using aesGCM.Seal
+	//Since we don't want to save the nonce somewhere else in this case, we add it as a prefix to the encrypted data. The first nonce argument in Seal is the prefix.
+	ciphertext := aesGCM.Seal(nonce, nonce, plaintext, nil)
 	return fmt.Sprintf("%x", ciphertext), nil
 }
 
-func generateAesNecessaryComponent(inputByte []byte) (cipher.AEAD, []byte, error) {
-	// Generate a new AES cipher using our len(key)-byte long key
-	cipherResult, cipherCreationError := aes.NewCipher(inputByte)
-
-	if cipherCreationError != nil {
-		return nil, []byte(constant.EmptyString), cipherCreationError
+func AesDecryption(encryptedString string, keyString string) (decryptedString string, err error) {
+	if encryptedString == "" || keyString == "" {
+		return constant.EmptyString, errors.New("input can not be empty")
+	}
+	if len(keyString) < 32 {
+		return constant.EmptyString, errors.New("key length must be greater than 32 bytes")
 	}
 
-	// Galois/Counter Mode (GCM) is a mode of operation for symmetric key cryptographic block ciphers
-	gcm, gcmCreationError := cipher.NewGCM(cipherResult)
-
-	if gcmCreationError != nil {
-		return nil, []byte(constant.EmptyString), gcmCreationError
+	key, keyDecodeStringError := hex.DecodeString(keyString)
+	enc, encDecodeStringError := hex.DecodeString(encryptedString)
+	if keyDecodeStringError != nil {
+		return constant.EmptyString, keyDecodeStringError
+	}
+	if encDecodeStringError != nil {
+		return constant.EmptyString, encDecodeStringError
 	}
 
-	// Generate a random nonce
-	nonce := make([]byte, gcm.NonceSize())
-
-	if _, ioReadFullError := io.ReadFull(rand.Reader, nonce); ioReadFullError != nil {
-		return nil, []byte(constant.EmptyString), ioReadFullError
+	//Create a new Cipher Block from the key
+	block, aesNewCipherError := aes.NewCipher(key)
+	if aesNewCipherError != nil {
+		return constant.EmptyString, aesNewCipherError
 	}
 
-	return gcm, nonce, nil
+	//Create a new GCM
+	aesGCM, cipherNewGcmError := cipher.NewGCM(block)
+	if cipherNewGcmError != nil {
+		return constant.EmptyString, cipherNewGcmError
+	}
+
+	//Get the nonce size
+	nonceSize := aesGCM.NonceSize()
+
+	//Extract the nonce from the encrypted data
+	nonce, ciphertext := enc[:nonceSize], enc[nonceSize:]
+
+	//Decrypt the data
+	plaintext, err := aesGCM.Open(nil, nonce, ciphertext, nil)
+	if err != nil {
+		return constant.EmptyString, err
+	}
+
+	// return fmt.Sprintf("%s", plaintext), nil
+	return string(plaintext), nil
 }
