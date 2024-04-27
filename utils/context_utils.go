@@ -13,7 +13,7 @@ func PrepareContext(c *gin.Context, isBypassCurrentUserCheck ...bool) (context.C
 
 	currentUser, isCurrentUserExist := GetCurrentUsername(c)
 
-	if len(isBypassCurrentUserCheck) < 1 || isBypassCurrentUserCheck[0] == false {
+	if len(isBypassCurrentUserCheck) < 1 || !isBypassCurrentUserCheck[0] {
 		if isCurrentUserExist != nil {
 			c.AbortWithStatusJSON(
 				http.StatusUnauthorized,
