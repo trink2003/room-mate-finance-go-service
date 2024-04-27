@@ -12,6 +12,14 @@ import (
 )
 
 func WithLevel(level constant.LogLevelType, ctx context.Context, content string) {
+
+	// ensure that ctx is never nil
+	if ctx == nil {
+		ctx = context.Background()
+		ctx = context.WithValue(ctx, constant.UsernameLogKey, "nil ctx input")
+		ctx = context.WithValue(ctx, constant.TraceIdLogKey, "nil ctx input")
+	}
+
 	timeZoneLocation, timeLoadLocationErr := time.LoadLocation("Asia/Ho_Chi_Minh")
 	if timeLoadLocationErr != nil {
 		return
@@ -19,8 +27,8 @@ func WithLevel(level constant.LogLevelType, ctx context.Context, content string)
 	currentTimestamp := time.Now().In(timeZoneLocation)
 	usernameFromContext := ctx.Value(constant.UsernameLogKey)
 	traceIdFromContext := ctx.Value(constant.TraceIdLogKey)
-	username := ""
-	traceId := ""
+	username := constant.EmptyString
+	traceId := constant.EmptyString
 	if usernameFromContext != nil {
 		username = usernameFromContext.(string)
 	}
