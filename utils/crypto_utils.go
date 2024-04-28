@@ -113,3 +113,57 @@ func AesDecryption(encryptedString string, keyString string) (decryptedString st
 	// return fmt.Sprintf("%s", plaintext), nil
 	return string(plaintext), nil
 }
+
+func HashHMACSHA512(inputData, keyData []byte) []byte {
+	formattedKey := formatKey(keyData)
+	ipad := xorIPAD(formattedKey)
+	innerData := Hash(append(ipad, inputData...))
+
+	opad := xorOPAD(formattedKey)
+	return Hash(append(opad, innerData...))
+}
+
+func formatKey(keyData []byte) []byte {
+	if len(keyData) >= 128 {
+		return Hash(keyData)
+	}
+
+	results := make([]byte, 128)
+	copy(results, keyData)
+	for i := len(keyData); i < 128; i++ {
+		results[i] = 0x00
+	}
+	return results
+}
+
+func xorIPAD(k []byte) []byte {
+	results := make([]byte, len(k))
+	for i, key := range k {
+		results[i] = key ^ 0x36
+	}
+	return results
+}
+
+func xorOPAD(k []byte) []byte {
+	results := make([]byte, len(k))
+	for i, key := range k {
+		results[i] = key ^ 0x5C
+	}
+	return results
+}
+
+func Hash(inputValues []byte) []byte {
+	formattedMessage := formatInput(inputValues)
+	computed := compute(formattedMessage)
+	return computed
+}
+
+func formatInput(inputValues []byte) []byte {
+	// Implement your own formatting logic if needed
+	return inputValues
+}
+
+func compute(messages []byte) []byte {
+	// Implement your own computation logic if needed
+	return messages
+}
