@@ -1,13 +1,47 @@
 package main
 
 import (
+	"crypto/hmac"
 	"crypto/rand"
+	"crypto/sha512"
 	"encoding/hex"
 	"fmt"
+	"log"
 	"room-mate-finance-go-service/utils"
 	"strings"
 	"testing"
 )
+
+func TestHashHmacsha512(t *testing.T) {
+	inputData := []byte("có thể gọi anh là đẹp trai nhất Việt Nam")
+	inputKey := []byte("z0P7ki1M3HLuA4zqMBj5yltkKgKennPF")
+	hmacSHA512Results := utils.HashHMACSHA512(inputData, inputKey)
+	if len(hmacSHA512Results) < 1 {
+		t.Error("null hmacSHA512Results is not a expectation result")
+		return
+	}
+	var hresult string
+	for _, r := range hmacSHA512Results {
+		hresult += fmt.Sprintf("%02X", r)
+	}
+	if len(hresult) < 1 {
+		t.Error("null hresult is not a expectation result")
+		return
+	}
+	fmt.Println("HMAC-SHA512 result:", hresult)
+
+	// just test
+	h := hmac.New(sha512.New, inputData)
+	h.Write(inputData)
+	results := h.Sum(nil)
+
+	var result string
+	for _, r := range results {
+		result += fmt.Sprintf("%02X", r)
+	}
+	log.Println("SHA-512 result:", result)
+
+}
 
 func TestCheckSumFunction(t *testing.T) {
 	var testPlainTextNoUpperCase = "có thể gọi anh là đẹp trai nhất việt nam"
